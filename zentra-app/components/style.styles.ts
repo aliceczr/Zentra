@@ -42,6 +42,31 @@ export const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     fontFamily: 'PoppinsSemiBold', // nome da fonte carregada
-}
+},
+  buttonForm:{
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.2)',
+    width: '100%', // ocupa toda a largura do container
+    alignSelf: 'stretch', // garante que a linha se estique
+    marginBottom: 20,
+    fontFamily: 'NunitoRegular', // nome da fonte carregada
+    color: '#133E4E',
+      },
+  textForm: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 5,
+    padding: 10,
+    marginTop: 10,
+    fontFamily: 'NunitoRegular', // nome da fonte carregada
+    color: '#133E4E',
+  },
+  buttonEntrar: {
+    marginTop: 20,
+    backgroundColor: '#48C9B0',
+}, 
+  viewForm: {
+    padding: 30,
+  },
 });
 // #133E4E -> texto , #010304, #48C9B0 -> botões, #A3C1AD, #EAF6F6 -> fundo, #5D6D7E, #FFFFFF

@@ -30,7 +30,7 @@ export default function LoginScreen() {
 
         <View style={styles.homeButtonContainer}>
           <TouchableOpacity style={styles.home_button}>
-            <Text style={{ fontFamily: 'PoppinsSemiBold' }} onPress={() => router.push('/(tabs)/home')}>Entrar</Text>
+            <Text style={{ fontFamily: 'PoppinsSemiBold' }} onPress={() => router.push('/entrar')}>Entrar</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.home_button}>
             <Text style={{ fontFamily: 'PoppinsSemiBold' }} onPress={() => router.push('/cadastro')}>Cadastre-se</Text>
