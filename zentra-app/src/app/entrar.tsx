@@ -1,14 +1,29 @@
-import { Text, View, TouchableOpacity, TextInput, Button } from 'react-native';
+import { Text, View, TouchableOpacity, TextInput, Alert } from 'react-native';
 import React, { useState } from 'react';
+import { router } from 'expo-router';
 import { styles } from './../components/style.styles';
+import { useAuthForm } from '../hooks/useAuth';
 
 
 export default function Entrar() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   
-  const  handleSubmit = () => {
-    alert(`Email: ${email}, Password: ${password}`);
+  const { loading, error, handleSignIn } = useAuthForm();
+  
+  const handleSubmit = async () => {
+    const success = await handleSignIn(email, password);
+    
+    if (success) {
+      alert('Sucesso! Login realizado com sucesso!');
+      // Limpar campos
+      setEmail('');
+      setPassword('');
+      // Redirecionar para home (tabs)
+      router.replace('/(tabs)/home');
+    } else if (error) {
+      alert(`Erro: ${error}`);
+    }
   }
   return (
     <View>
@@ -30,9 +45,15 @@ export default function Entrar() {
         secureTextEntry
         style={styles.buttonForm}
       />
-      <TouchableOpacity style={styles.buttonEntrar} onPress={handleSubmit}>
-        <Text style={styles.textForm}>Entrar</Text>
-       </TouchableOpacity>
+      <TouchableOpacity 
+        style={styles.buttonEntrar} 
+        onPress={handleSubmit}
+        disabled={loading}
+      >
+        <Text style={styles.textForm}>
+          {loading ? 'Entrando...' : 'Entrar'}
+        </Text>
+      </TouchableOpacity>
     </View>
 
   </View>
