@@ -6,7 +6,9 @@ import { supabase } from '../../supabase-client';
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  signUp: (email: string, password: string) => Promise<void>;
+  isRegistering: boolean;
+  setIsRegistering: (value: boolean) => void;
+  signUp: (email: string, password: string) => Promise<any>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
@@ -20,6 +22,7 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isRegistering, setIsRegistering] = useState(false);
 
   useEffect(() => {
     // TEMPORÁRIO: Comentando verificação inicial para debug
@@ -41,6 +44,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     // Escutar mudanças de autenticação
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('🔐 Auth state change:', { event, user: session?.user?.id });
       setUser(session?.user ?? null);
       setLoading(false);
     });
@@ -48,10 +52,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string): Promise<void> => {
+  const signUp = async (email: string, password: string): Promise<any> => {
     try {
-      await authService.signUp({ email, password });
+      console.log('🔐 AuthContext.signUp chamado');
+      const result = await authService.signUp({ email, password });
+      console.log('✅ authService.signUp resultado:', result);
+      return result;
     } catch (error) {
+      console.error('❌ Erro no AuthContext.signUp:', error);
       throw error;
     }
   };
@@ -76,6 +84,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const value: AuthContextType = {
     user,
     loading,
+    isRegistering,
+    setIsRegistering,
     signUp,
     signIn,
     signOut,

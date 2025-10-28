@@ -3,6 +3,7 @@ import { supabase } from '../../supabase-client';
 export interface SignUpData {
   email: string;
   password: string;
+
 }
 
 export interface SignInData {

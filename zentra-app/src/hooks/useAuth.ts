@@ -7,8 +7,11 @@ export const useAuthForm = () => {
   const { signUp, signIn } = useAuthContext();
 
   const handleSignUp = async (email: string, password: string, confirmPassword: string) => {
+    console.log('🔐 useAuthForm.handleSignUp chamado');
+    
     if (password !== confirmPassword) {
       setError('As senhas não coincidem!');
+      console.error('❌ Senhas não coincidem');
       return false;
     }
 
@@ -16,9 +19,12 @@ export const useAuthForm = () => {
     setError(null);
 
     try {
-      await signUp(email, password);
-      return true;
+      console.log('📞 Chamando authContext.signUp...');
+      const result = await signUp(email, password);
+      console.log('✅ authContext.signUp concluído:', result);
+      return result; // Retorna o resultado completo
     } catch (err) {
+      console.error('❌ Erro no signUp:', err);
       setError(err instanceof Error ? err.message : 'Erro ao cadastrar');
       return false;
     } finally {
