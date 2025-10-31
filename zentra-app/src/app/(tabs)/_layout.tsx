@@ -17,7 +17,11 @@ function CarrinhoIcon({ color }: { color: string }) {
 
 export default function TabLayout() {
   return (
-    <Tabs>
+    <Tabs
+      screenOptions={{
+        headerShown: false, // Remove header globalmente para todas as tabs
+      }}
+    >
       <Tabs.Screen
         // O "name" DEVE ser igual ao nome do arquivo, sem a extensão .tsx
         name="home"
@@ -50,6 +54,14 @@ export default function TabLayout() {
           title: 'Perfil',
           headerShown: false,
           tabBarIcon: ({ color }) => <Ionicons size={28} name="person-outline" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="pagamento"
+        options={{
+          title: 'Pagamento',
+          headerShown: false,
+          href: null, // Oculta da barra de navegação
         }}
       />
     </Tabs>

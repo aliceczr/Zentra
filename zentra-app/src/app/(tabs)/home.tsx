@@ -3,47 +3,39 @@ import {
   View,
   Text,
   ScrollView,
-  SafeAreaView,
   TouchableOpacity,
   Image,
   StyleSheet,
   TextInput,
   FlatList,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useProdutoContext } from '../../contexts/produtoContext';
 import { useAuth } from '../../contexts/AuthContext';
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { produtos, atualizarFiltros, limparFiltros } = useProdutoContext();
+  const { produtos, atualizarFiltros, limparFiltros, carregarProdutos, filtrarPorCategoria } = useProdutoContext();
   const { user } = useAuth();
   
-  // Estado local para o input de busca
-  const [textoBusca, setTextoBusca] = useState('');
+
+  // Limpar filtros e recarregar produtos quando voltar para a home
+  useFocusEffect(
+    React.useCallback(() => {
+      // Limpa os filtros e recarrega todos os produtos
+      limparFiltros();
+      carregarProdutos({});
+    }, [])
+  );
 
   // Produtos em promoção (primeiros 3 produtos para demonstração)
   const produtosPromocao = produtos.slice(0, 3);
-
-  const handleBuscar = async (texto?: string) => {
-    const termoBusca = texto || textoBusca;
-    if (termoBusca.trim()) {
-      // Atualiza apenas os filtros no Context (não filtra ainda)
-      atualizarFiltros({ busca: termoBusca.trim() });
-      // Navega para a lista que aplicará a busca ao carregar
-      router.push('/(tabs)/list_produtos');
-    } else {
-      // Se não há texto, limpa os filtros e vai para a lista
-      limparFiltros();
-      router.push('/(tabs)/list_produtos');
-    }
-  };
-
   const handleCategoriaPress = async (categoriaId: number) => {
-    // Atualiza apenas os filtros no Context (não filtra ainda)
-    atualizarFiltros({ categoria_id: categoriaId });
-    // Navega para a lista que aplicará o filtro ao carregar
+    // Usa o método específico que atualiza e executa a busca imediatamente
+    await filtrarPorCategoria(categoriaId);
+    // Navega para a lista que já terá os produtos filtrados
     router.push('/(tabs)/list_produtos');
   };
 
@@ -153,7 +145,10 @@ export default function HomeScreen() {
 
             <TouchableOpacity
               style={styles.categoriaItem}
-              onPress={() => router.push('/(tabs)/list_produtos')}
+              onPress={() => {
+                limparFiltros();
+                router.push('/(tabs)/list_produtos');
+              }}
             >
               <View style={styles.categoriaIcone}>
                 <Ionicons name="flash" size={24} color="#48C9B0" />

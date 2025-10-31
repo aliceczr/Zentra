@@ -761,7 +761,8 @@ export const styles = StyleSheet.create({
     backgroundColor: 'white',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    maxHeight: '80%',
+    maxHeight: '95%', // Aumentado de 80% para 95%
+    minHeight: '70%', // Altura mínima para garantir espaço adequado
     paddingTop: 8,
   },
   
@@ -798,7 +799,8 @@ export const styles = StyleSheet.create({
   mobileModalContent: {
     flex: 1,
     paddingHorizontal: 20,
-    paddingBottom: 20, // Espaço extra no final
+    paddingTop: 10, // Adiciona espaço no topo
+    paddingBottom: 30, // Aumentado de 20 para 30 - Espaço extra no final
   },
   
   // Seções de filtro no modal
@@ -857,7 +859,7 @@ export const styles = StyleSheet.create({
     borderColor: '#e0e0e0',
     borderRadius: 8,
     backgroundColor: '#f9f9f9',
-    maxHeight: 200, // Altura máxima para forçar scroll
+    maxHeight: 300, // Aumentado de 200 para 300
   },
   
   mobileDropdownOpcao: {
@@ -865,10 +867,10 @@ export const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 16, // Aumentado de 12 para 16
     borderBottomWidth: 1,
     borderBottomColor: '#e8e8e8',
-    minHeight: 44, // Altura mínima para facilitar o toque
+    minHeight: 50, // Aumentado de 44 para 50 para facilitar o toque
   },
   
   mobileDropdownOpcaoSelecionado: {
