@@ -24,17 +24,20 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
 
   const fetchUserProfile = async () => {
     if (!user) {
+      console.log('❌ UserContext: Nenhum usuário para buscar perfil');
       setProfile(null);
       setLoadingProfile(false);
       return;
     }
 
+    console.log('🔍 UserContext: Buscando perfil do usuário:', user.email);
     setLoadingProfile(true);
     try {
       const userProfile = await userService.getUserProfile();
+      console.log('✅ UserContext: Perfil encontrado:', userProfile?.nome);
       setProfile(userProfile);
     } catch (error) {
-      console.error('Error fetching user profile:', error);
+      console.error('❌ UserContext: Erro ao buscar perfil:', error);
       setProfile(null);
     } finally {
       setLoadingProfile(false);

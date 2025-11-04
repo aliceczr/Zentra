@@ -1,8 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Produto, FiltrosProduto } from '../services/produtoService';
+import { Produto, FiltrosProduto, FiltroOpcao } from '../services/produtoService';
 import { buscarProdutos, buscarPorId } from '../services/produtoService';
-// Dados mock para desenvolvimento
-import { mockProdutos } from '../data/mocks/mockProdutosTeste';
 
 // Interface para o estado do contexto
 interface ProdutoState {
@@ -67,60 +65,22 @@ export function ProdutoProvider({ children }: ProdutoProviderProps) {
       setLoading(true);
       setError(null);
       
-      // Para desenvolvimento, usar dados mock - futuramente será API real
       const filtrosParaUsar = novosFiltros || filtros;
       
-      // Simular delay de API para desenvolvimento
-      await new Promise(resolve => setTimeout(resolve, 300));
+      console.log('🔍 Context: Iniciando carregamento com filtros:', filtrosParaUsar);
       
-      let produtosFiltrados = [...mockProdutos];
+      const produtosCarregados = await buscarProdutos(filtrosParaUsar);
       
-      // Aplicar filtros se existirem
-      if (filtrosParaUsar.busca) {
-        const termoBusca = filtrosParaUsar.busca.toLowerCase();
-        produtosFiltrados = produtosFiltrados.filter(produto =>
-          produto.nome.toLowerCase().includes(termoBusca) ||
-          (produto.descricao && produto.descricao.toLowerCase().includes(termoBusca)) ||
-          (produto.fabricante && produto.fabricante.toLowerCase().includes(termoBusca)) ||
-          (produto.marca && produto.marca.toLowerCase().includes(termoBusca))
-        );
-      }
+      console.log('✅ Context: Produtos carregados:', produtosCarregados.length, 'produtos');
+      console.log('📦 Context: Primeiro produto:', produtosCarregados[0]);
       
-      if (filtrosParaUsar.categoria_id) {
-        produtosFiltrados = produtosFiltrados.filter(produto =>
-          produto.categoria_id === filtrosParaUsar.categoria_id
-        );
-      }
+      setProdutos(produtosCarregados);
       
-      if (filtrosParaUsar.fabricante) {
-        produtosFiltrados = produtosFiltrados.filter(produto =>
-          produto.fabricante === filtrosParaUsar.fabricante
-        );
-      }
-      
-      if (filtrosParaUsar.marca) {
-        produtosFiltrados = produtosFiltrados.filter(produto =>
-          produto.marca === filtrosParaUsar.marca
-        );
-      }
-      
-      if (filtrosParaUsar.preco_min !== undefined) {
-        produtosFiltrados = produtosFiltrados.filter(produto =>
-          produto.preco >= filtrosParaUsar.preco_min!
-        );
-      }
-      
-      if (filtrosParaUsar.preco_max !== undefined) {
-        produtosFiltrados = produtosFiltrados.filter(produto =>
-          produto.preco <= filtrosParaUsar.preco_max!
-        );
-      }
-      
-      setProdutos(produtosFiltrados);
       if (novosFiltros) {
         setFiltros(filtrosParaUsar);
       }
     } catch (error) {
+      console.error('❌ Context: Erro ao carregar produtos:', error);
       handleError(error, 'carregar produtos');
     } finally {
       setLoading(false);

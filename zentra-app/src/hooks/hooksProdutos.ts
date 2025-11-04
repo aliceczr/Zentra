@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Produto, FiltrosProduto } from '../services/produtoService';
+import { Produto, FiltrosProduto, FiltroOpcao, buscarFabricantes, buscarMarcas, buscarCategorias } from '../services/produtoService';
 import { buscarProdutos, buscarPorId } from '../services/produtoService';
 import { useProdutoContext } from '../contexts/produtoContext';
 
@@ -263,14 +263,6 @@ export function useCarrinho() {
   };
 }
 
-// =============================================================================
-// 🏪 HOOKS ESPECIALIZADOS USANDO CONTEXT (Nova Arquitetura)
-// =============================================================================
-
-/**
- * Hook especializado para listagem de produtos
- * Mantém compatibilidade total com useBuscaProdutos
- */
 export function useProdutosList() {
   const { 
     produtos, 
@@ -279,6 +271,9 @@ export function useProdutosList() {
     filtros,
     carregarProdutos
   } = useProdutoContext();
+  
+  console.log('📋 HOOK useProdutosList: produtos recebidos do Context:', produtos.length);
+  console.log('📋 HOOK useProdutosList: primeiro produto:', produtos[0]);
   
   // Alias para manter compatibilidade com interface anterior
   const buscar = carregarProdutos;
@@ -338,5 +333,99 @@ export function useProdutoDetalhes() {
     produto: produtoSelecionado,
     selecionarProduto,
     limparProduto: limparProdutoSelecionado,
+  };
+}
+
+// =============================================================================
+// 🏭 HOOK PARA FILTROS DINÂMICOS
+// =============================================================================
+
+/**
+ * Hook para carregar filtros dinâmicos do banco de dados
+ * Busca fabricantes, marcas e categorias disponíveis
+ */
+export function useFiltrosDinamicos() {
+  const [fabricantes, setFabricantes] = useState<FiltroOpcao[]>([]);
+  const [marcas, setMarcas] = useState<FiltroOpcao[]>([]);
+  const [categorias, setCategorias] = useState<FiltroOpcao[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Carregar todos os filtros
+  const carregarFiltros = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      console.log('🔄 HOOK: Carregando filtros dinâmicos...');
+      
+      // Carregar todos os filtros em paralelo
+      const [fabricantesData, marcasData, categoriasData] = await Promise.all([
+        buscarFabricantes(),
+        buscarMarcas(),
+        buscarCategorias()
+      ]);
+      
+      setFabricantes(fabricantesData);
+      setMarcas(marcasData);
+      setCategorias(categoriasData);
+      
+      console.log('✅ HOOK: Filtros carregados:', {
+        fabricantes: fabricantesData.length - 1, // -1 para descontar "Todos"
+        marcas: marcasData.length - 1,
+        categorias: categoriasData.length - 1
+      });
+      
+    } catch (err) {
+      const mensagem = err instanceof Error ? err.message : 'Erro ao carregar filtros';
+      setError(mensagem);
+      console.error('❌ HOOK: Erro ao carregar filtros:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Recarregar apenas fabricantes (útil quando produtos são atualizados)
+  const recarregarFabricantes = async () => {
+    try {
+      const fabricantesData = await buscarFabricantes();
+      setFabricantes(fabricantesData);
+    } catch (err) {
+      console.error('❌ HOOK: Erro ao recarregar fabricantes:', err);
+    }
+  };
+
+  // Recarregar apenas marcas
+  const recarregarMarcas = async () => {
+    try {
+      const marcasData = await buscarMarcas();
+      setMarcas(marcasData);
+    } catch (err) {
+      console.error('❌ HOOK: Erro ao recarregar marcas:', err);
+    }
+  };
+
+  // Carregar filtros na inicialização
+  useEffect(() => {
+    carregarFiltros();
+  }, []);
+
+  return {
+    // Estados
+    fabricantes,
+    marcas,
+    categorias,
+    loading,
+    error,
+    
+    // Ações
+    carregarFiltros,
+    recarregarFabricantes,
+    recarregarMarcas,
+    
+    // Status
+    temFabricantes: fabricantes.length > 1,
+    temMarcas: marcas.length > 1,
+    temCategorias: categorias.length > 1,
   };
 }

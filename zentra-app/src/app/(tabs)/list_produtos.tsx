@@ -8,21 +8,14 @@ import {
   Image,
   TextInput,
   Modal,
-  SafeAreaView
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useProdutosList } from '../../hooks/hooksProdutos';
-import { Produto } from '../../services/produtoService';
+import { useProdutosList, useFiltrosDinamicos } from '../../hooks/hooksProdutos';
+import { Produto, FiltroOpcao } from '../../services/produtoService';
 import { styles } from '../../components/style.styles';
 import { useAdicionarAoCarrinho, useCarrinhoContador } from '../../hooks/hooksCarrinho';
-
-// Interface para opções de filtro dropdown
-interface FiltroOpcao {
-  id: string;
-  label: string;
-  value: string;
-}
 
 export default function ListProdutosScreen() {
   // Hook para navegação
@@ -30,6 +23,16 @@ export default function ListProdutosScreen() {
   
   // Hook para busca de produtos via Context (Nova Arquitetura)
   const { produtos, loading, error, buscar, filtros } = useProdutosList();
+  
+  // 🆕 Hook para filtros dinâmicos do banco
+  const { 
+    fabricantes, 
+    marcas, 
+    categorias, 
+    loading: loadingFiltros, 
+    error: errorFiltros,
+    carregarFiltros 
+  } = useFiltrosDinamicos();
   
   // Hooks do carrinho
   const adicionarAoCarrinho = useAdicionarAoCarrinho();
@@ -65,35 +68,6 @@ export default function ListProdutosScreen() {
   
   // Contador de filtros ativos
   const [filtrosAtivos, setFiltrosAtivos] = useState<number>(0);
-  
-  // Opções dos dropdowns baseadas nos produtos do mockProdutosTeste
-  const fabricantes: FiltroOpcao[] = [
-    { id: 'todos', label: 'Todos os Fabricantes', value: '' },
-    { id: 'alfa', label: 'Laboratório Alfa', value: 'Laboratório Alfa' },
-    { id: 'beta', label: 'Laboratório Beta', value: 'Laboratório Beta' },
-    { id: 'gamma', label: 'Laboratório Gamma', value: 'Laboratório Gamma' },
-    { id: 'delta', label: 'Cosméticos Delta', value: 'Cosméticos Delta' },
-    { id: 'epsilon', label: 'Cosméticos Epsilon', value: 'Cosméticos Epsilon' },
-    { id: 'zeta', label: 'Cosméticos Zeta', value: 'Cosméticos Zeta' },
-  ];
-  
-  const marcas: FiltroOpcao[] = [
-    { id: 'todas', label: 'Todas as Marcas', value: '' },
-    { id: 'generico', label: 'GenéricoAlfa', value: 'GenéricoAlfa' },
-    { id: 'painfree', label: 'PainFree', value: 'PainFree' },
-    { id: 'vitac', label: 'VitaC', value: 'VitaC' },
-    { id: 'skinnourish', label: 'SkinNourish', value: 'SkinNourish' },
-    { id: 'youthboost', label: 'YouthBoost', value: 'YouthBoost' },
-    { id: 'hairstrong', label: 'HairStrong', value: 'HairStrong' },
-  ];
-  
-  const categorias: FiltroOpcao[] = [
-    { id: 'todas', label: 'Todas as Categorias', value: '' },
-    { id: 'medicamentos', label: 'Medicamentos', value: '1' },
-    { id: 'suplementos', label: 'Suplementos', value: '2' },
-    { id: 'cosmeticos', label: 'Cosméticos', value: '3' },
-    { id: 'cuidados-cabelo', label: 'Cuidados com Cabelo', value: '4' },
-  ];
 
   // Carregar produtos iniciais com filtros do contexto
   useEffect(() => {
@@ -262,10 +236,12 @@ export default function ListProdutosScreen() {
       onPress={() => navegarParaDetalhes(item.id)}
       activeOpacity={0.7}
     >
-      {/* Badge de desconto */}
-      <View style={styles.mobileDescontoBadge}>
-        <Text style={styles.mobileDescontoTexto}>15%</Text>
-      </View>
+      {/* Badge de desconto - apenas para produtos em destaque */}
+      {item.destaque && (
+        <View style={styles.mobileDescontoBadge}>
+          <Text style={styles.mobileDescontoTexto}>15%</Text>
+        </View>
+      )}
       
       {/* Imagem do produto */}
       <View style={styles.mobileProdutoImagemContainer}>
@@ -273,6 +249,12 @@ export default function ListProdutosScreen() {
           source={{ uri: item.imagem_principal || 'https://via.placeholder.com/120x120/48C9B0/FFFFFF?text=Produto' }}
           style={styles.mobileProdutoImagem}
           resizeMode="contain"
+          onLoad={() => console.log('✅ LISTA: Imagem carregada:', item.nome)}
+          onError={(error) => {
+            console.log('❌ LISTA: Erro ao carregar imagem:', item.nome);
+            console.log('❌ LISTA: URL da imagem:', item.imagem_principal);
+            console.log('❌ LISTA: Detalhes do erro:', error.nativeEvent);
+          }}
         />
       </View>
       
@@ -284,7 +266,10 @@ export default function ListProdutosScreen() {
         
         {/* Preços */}
         <View style={styles.mobileProdutoPrecos}>
-          <Text style={styles.mobilePrecoOriginal}>R$ {(item.preco * 1.18).toFixed(2)}</Text>
+          {/* Preço cortado apenas para produtos em destaque */}
+          {item.destaque && (
+            <Text style={styles.mobilePrecoOriginal}>R$ {(item.preco * 1.18).toFixed(2)}</Text>
+          )}
           <Text style={styles.mobilePrecoAtual}>R$ {item.preco.toFixed(2)}</Text>
         </View>
         

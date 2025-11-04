@@ -3,47 +3,58 @@ import {
   View,
   Text,
   ScrollView,
-  SafeAreaView,
   TouchableOpacity,
   Image,
   StyleSheet,
   TextInput,
   FlatList,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useProdutoContext } from '../../contexts/produtoContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { useUser } from '../../contexts/UserContext';
+import { useCarrinhoContador } from '../../hooks/hooksCarrinho';
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { produtos, atualizarFiltros, limparFiltros } = useProdutoContext();
+  const { produtos, atualizarFiltros, limparFiltros, carregarProdutos, filtrarPorCategoria } = useProdutoContext();
   const { user } = useAuth();
+  const { profile, fetchUserProfile } = useUser();
+  const { quantidade } = useCarrinhoContador();
   
-  // Estado local para o input de busca
-  const [textoBusca, setTextoBusca] = useState('');
+  console.log('🏠 HOME: Componente renderizado com', produtos.length, 'produtos');
+  console.log('🏠 HOME: Primeiro produto:', produtos[0]);
+  console.log('🏠 HOME: Estado do usuário:', { 
+    user: user?.email, 
+    profile: profile?.nome,
+    hasProfile: !!profile 
+  });
 
-  // Produtos em promoção (primeiros 3 produtos para demonstração)
-  const produtosPromocao = produtos.slice(0, 3);
-
-  const handleBuscar = async (texto?: string) => {
-    const termoBusca = texto || textoBusca;
-    if (termoBusca.trim()) {
-      // Atualiza apenas os filtros no Context (não filtra ainda)
-      atualizarFiltros({ busca: termoBusca.trim() });
-      // Navega para a lista que aplicará a busca ao carregar
-      router.push('/(tabs)/list_produtos');
-    } else {
-      // Se não há texto, limpa os filtros e vai para a lista
+  // Limpar filtros e recarregar produtos quando voltar para a home
+  useFocusEffect(
+    React.useCallback(() => {
+      console.log('🏠 HOME: useFocusEffect executado - limpando filtros e recarregando');
+      // Limpa os filtros e recarrega todos os produtos
       limparFiltros();
-      router.push('/(tabs)/list_produtos');
-    }
-  };
+      carregarProdutos({});
+      // Buscar perfil do usuário
+      if (user) {
+        console.log('👤 HOME: Usuário encontrado, buscando perfil...', user.email);
+        fetchUserProfile();
+      } else {
+        console.log('❌ HOME: Nenhum usuário encontrado para buscar perfil');
+      }
+    }, [user])
+  );
 
+  // Produtos em promoção - apenas produtos com destaque = true
+  const produtosPromocao = produtos.filter(produto => produto.destaque).slice(0, 3);
   const handleCategoriaPress = async (categoriaId: number) => {
-    // Atualiza apenas os filtros no Context (não filtra ainda)
-    atualizarFiltros({ categoria_id: categoriaId });
-    // Navega para a lista que aplicará o filtro ao carregar
+    // Usa o método específico que atualiza e executa a busca imediatamente
+    await filtrarPorCategoria(categoriaId);
+    // Navega para a lista que já terá os produtos filtrados
     router.push('/(tabs)/list_produtos');
   };
 
@@ -51,7 +62,11 @@ export default function HomeScreen() {
     router.push(`/produto/${produtoId}` as any);
   };
 
-  const renderProdutoPromocao = ({ item }: { item: any }) => (
+  const renderProdutoPromocao = ({ item }: { item: any }) => {
+    console.log('🖼️ HOME: Renderizando produto:', item.nome);
+    console.log('🖼️ HOME: URL da imagem:', item.imagem_principal);
+    
+    return (
     <TouchableOpacity
       style={styles.produtoPromocaoCard}
       onPress={() => handleProdutoPress(item.id)}
@@ -64,22 +79,35 @@ export default function HomeScreen() {
           }}
           style={styles.produtoPromocaoImage}
           resizeMode="contain"
+          onLoad={() => console.log('✅ HOME: Imagem carregada:', item.nome)}
+          onError={(error) => console.log('❌ HOME: Erro ao carregar imagem:', item.nome, error.nativeEvent)}
         />
-        <View style={styles.descontoBadge}>
-          <Text style={styles.descontoBadgeText}>15%</Text>
-        </View>
+        {/* Badge de desconto - apenas para produtos em destaque */}
+        {item.destaque && (
+          <View style={styles.descontoBadge}>
+            <Text style={styles.descontoBadgeText}>15%</Text>
+          </View>
+        )}
       </View>
       
       <View style={styles.produtoPromocaoInfo}>
         <Text style={styles.produtoPromocaoNome} numberOfLines={2}>
           {item.nome}
         </Text>
-        <Text style={styles.produtoPromocaoPreco}>
-          R$ {item.preco.toFixed(2).replace('.', ',')}
-        </Text>
+        <View style={styles.produtoPromocaoPrecos}>
+          {/* Preço cortado apenas para produtos em destaque */}
+          {item.destaque && (
+            <Text style={styles.produtoPromocaoPrecoOriginal}>
+              R$ {(item.preco * 1.18).toFixed(2).replace('.', ',')}
+            </Text>
+          )}
+          <Text style={styles.produtoPromocaoPreco}>
+            R$ {item.preco.toFixed(2).replace('.', ',')}
+          </Text>
+        </View>
       </View>
     </TouchableOpacity>
-  );
+  );};
 
   return (
     <SafeAreaView style={styles.container}>
@@ -89,13 +117,30 @@ export default function HomeScreen() {
           <View style={styles.saudacao}>
             <Text style={styles.saudacaoTexto}>Olá!</Text>
             <Text style={styles.saudacaoNome}>
-              {user?.email?.split('@')[0] || 'Bem-vindo(a)'}
+              {profile?.nome || user?.email?.split('@')[0] || 'Bem-vindo(a)'}
             </Text>
           </View>
           
-          <TouchableOpacity style={styles.perfilButton}>
-            <Ionicons name="person-circle-outline" size={32} color="#133E4E" />
-          </TouchableOpacity>
+          <View style={styles.headerButtons}>
+            <TouchableOpacity 
+              style={styles.carrinhoButton}
+              onPress={() => router.push('/(tabs)/carrinho')}
+            >
+              <Ionicons name="cart-outline" size={28} color="#133E4E" />
+              {quantidade > 0 && (
+                <View style={styles.carrinhoBadge}>
+                  <Text style={styles.carrinhoBadgeText}>{quantidade}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.perfilButton}
+              onPress={() => router.push('/(tabs)/perfil')}
+            >
+              <Ionicons name="person-circle-outline" size={32} color="#133E4E" />
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Banner Principal */}
@@ -104,11 +149,8 @@ export default function HomeScreen() {
             <View style={styles.bannerContent}>
               <Text style={styles.bannerTitulo}>Farmácia Online</Text>
               <Text style={styles.bannerSubtitulo}>
-                Medicamentos com entrega rápida
+                Medicamentos com qualidade garantida
               </Text>
-              <TouchableOpacity style={styles.bannerButton}>
-                <Text style={styles.bannerButtonText}>Ver Ofertas</Text>
-              </TouchableOpacity>
             </View>
             <View style={styles.bannerIcone}>
               <Ionicons name="medical" size={60} color="#48C9B0" />
@@ -153,7 +195,10 @@ export default function HomeScreen() {
 
             <TouchableOpacity
               style={styles.categoriaItem}
-              onPress={() => router.push('/(tabs)/list_produtos')}
+              onPress={() => {
+                limparFiltros();
+                router.push('/(tabs)/list_produtos');
+              }}
             >
               <View style={styles.categoriaIcone}>
                 <Ionicons name="flash" size={24} color="#48C9B0" />
@@ -186,12 +231,12 @@ export default function HomeScreen() {
         <View style={styles.infoBannerContainer}>
           <View style={styles.infoBanner}>
             <View style={styles.infoBannerIcone}>
-              <Ionicons name="timer" size={24} color="#48C9B0" />
+              <Ionicons name="shield-checkmark" size={24} color="#48C9B0" />
             </View>
             <View style={styles.infoBannerTexto}>
-              <Text style={styles.infoBannerTitulo}>Entrega Rápida</Text>
+              <Text style={styles.infoBannerTitulo}>Qualidade Garantida</Text>
               <Text style={styles.infoBannerSubtitulo}>
-                Receba seus medicamentos em até 2 horas
+                Produtos aprovados pela ANVISA e farmacêutica responsável
               </Text>
             </View>
           </View>
@@ -230,6 +275,32 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     color: '#133E4E',
+  },
+  headerButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  carrinhoButton: {
+    position: 'relative',
+    padding: 4,
+  },
+  carrinhoBadge: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    backgroundColor: '#FF6B6B',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+  },
+  carrinhoBadgeText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
   perfilButton: {
     padding: 4,
@@ -409,6 +480,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#48C9B0',
     fontWeight: 'bold',
+  },
+  produtoPromocaoPrecos: {
+    alignItems: 'center',
+    gap: 2,
+  },
+  produtoPromocaoPrecoOriginal: {
+    fontSize: 12,
+    color: '#999',
+    textDecorationLine: 'line-through',
   },
   infoBannerContainer: {
     paddingHorizontal: 20,

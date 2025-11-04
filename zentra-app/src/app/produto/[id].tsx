@@ -3,13 +3,12 @@ import {
   View,
   Text,
   ScrollView,
-  SafeAreaView,
   TouchableOpacity,
   Image,
   StyleSheet,
-  Linking,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useProdutoContext } from '../../contexts/produtoContext';
@@ -34,12 +33,6 @@ export default function ProdutoDetalhes() {
   const handleVoltar = () => {
     router.back();
   };
-
-  const handleFavoritar = () => {
-    // TODO: Implementar funcionalidade de favoritos
-    console.log('Favoritar produto:', id);
-  };
-
   const handleComprar = async () => {
     if (!produto) return;
     
@@ -59,12 +52,6 @@ export default function ProdutoDetalhes() {
       );
     } catch (error) {
       Alert.alert('Erro', 'Não foi possível adicionar o produto ao carrinho.');
-    }
-  };
-
-  const handleAbrirBula = () => {
-    if (produto?.bula_url) {
-      Linking.openURL(produto.bula_url);
     }
   };
 
@@ -94,9 +81,6 @@ export default function ProdutoDetalhes() {
         </Text>
         
         <View style={styles.headerRight}>
-          <TouchableOpacity onPress={handleFavoritar} style={styles.headerButton}>
-            <Ionicons name="heart-outline" size={24} color="#333" />
-          </TouchableOpacity>
           
           <TouchableOpacity 
             style={styles.headerButton}
@@ -132,25 +116,28 @@ export default function ProdutoDetalhes() {
           </Text>
           
           <View style={styles.priceContainer}>
-            <Text style={styles.price}>R$ {produto.preco.toFixed(2).replace('.', ',')}</Text>
-            
-            {/* Controles de quantidade */}
-            <View style={styles.quantidadeContainer}>
-              <TouchableOpacity 
-                style={styles.quantidadeBotao}
-                onPress={() => setQuantidade(Math.max(1, quantidade - 1))}
-              >
-                <Ionicons name="remove" size={16} color="#133E4E" />
-              </TouchableOpacity>
+            <View style={styles.priceSection}>
+              <Text style={styles.price}>R$ {produto.preco.toFixed(2).replace('.', ',')}</Text>
               
-              <Text style={styles.quantidadeTexto}>{quantidade}</Text>
-              
-              <TouchableOpacity 
-                style={styles.quantidadeBotao}
-                onPress={() => setQuantidade(quantidade + 1)}
-              >
-                <Ionicons name="add" size={16} color="#133E4E" />
-              </TouchableOpacity>
+              {/* Controles de quantidade */}
+              <View style={styles.quantidadeContainer}>
+                <Text style={styles.quantidadeLabel}>Qtd:</Text>
+                <TouchableOpacity 
+                  style={styles.quantidadeBotao}
+                  onPress={() => setQuantidade(Math.max(1, quantidade - 1))}
+                >
+                  <Ionicons name="remove" size={14} color="#133E4E" />
+                </TouchableOpacity>
+                
+                <Text style={styles.quantidadeTexto}>{quantidade}</Text>
+                
+                <TouchableOpacity 
+                  style={styles.quantidadeBotao}
+                  onPress={() => setQuantidade(quantidade + 1)}
+                >
+                  <Ionicons name="add" size={14} color="#133E4E" />
+                </TouchableOpacity>
+              </View>
             </View>
             
             <TouchableOpacity 
@@ -158,9 +145,9 @@ export default function ProdutoDetalhes() {
               onPress={handleComprar}
               disabled={loading}
             >
-              <Ionicons name="cart" size={16} color="white" style={styles.buyButtonIcon} />
+              <Ionicons name="cart" size={14} color="white" style={styles.buyButtonIcon} />
               <Text style={styles.buyButtonText}>
-                {loading ? 'Adicionando...' : jaNoCarrinho ? 'Adicionar Mais' : 'Adicionar ao Carrinho'}
+                {loading ? 'Adicionando...' : jaNoCarrinho ? 'Adicionar +' : 'Adicionar'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -271,18 +258,6 @@ export default function ProdutoDetalhes() {
           )}
         </View>
 
-        {/* Link para Bula */}
-        {produto.bula_url && (
-          <View style={styles.section}>
-            <View style={styles.bulaContainer}>
-              <Text style={styles.bulaLabel}>Bula</Text>
-              <TouchableOpacity onPress={handleAbrirBula}>
-                <Text style={styles.bulaLink}>Ler bula</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
-
         {/* Espaçamento final */}
         <View style={styles.bottomSpacing} />
       </ScrollView>
@@ -387,27 +362,32 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   priceContainer: {
+    flexDirection: 'column',
+    gap: 12,
+  },
+  priceSection: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
   price: {
-    fontSize: 24,
+    fontSize: 22, // Reduzido de 24 para 22
     fontWeight: 'bold',
     color: '#133E4E', // Azul escuro consistente
   },
   buyButton: {
     backgroundColor: '#48C9B0', // Verde turquesa consistente
-    paddingHorizontal: 32,
-    paddingVertical: 12,
+    paddingHorizontal: 24, // Reduzido de 32 para 24
+    paddingVertical: 10, // Reduzido de 12 para 10
     borderRadius: 8,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    alignSelf: 'stretch', // Faz o botão ocupar toda a largura
   },
   buyButtonText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 14, // Reduzido de 16 para 14
     fontWeight: '600',
   },
   section: {
@@ -486,12 +466,18 @@ const styles = StyleSheet.create({
   quantidadeContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 8,
+    gap: 8, // Espaçamento entre elementos
+  },
+  quantidadeLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#133E4E',
+    marginRight: 4,
   },
   quantidadeBotao: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 28, // Reduzido de 32 para 28
+    height: 28, // Reduzido de 32 para 28
+    borderRadius: 14,
     backgroundColor: '#f0f0f0',
     alignItems: 'center',
     justifyContent: 'center',
@@ -499,11 +485,10 @@ const styles = StyleSheet.create({
     borderColor: '#ddd',
   },
   quantidadeTexto: {
-    fontSize: 16,
+    fontSize: 14, // Reduzido de 16 para 14
     fontWeight: 'bold',
     color: '#133E4E',
-    marginHorizontal: 16,
-    minWidth: 30,
+    minWidth: 24, // Reduzido de 30 para 24
     textAlign: 'center',
   },
   
@@ -513,7 +498,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   buyButtonIcon: {
-    marginRight: 8,
+    marginRight: 6, // Reduzido de 8 para 6
   },
   
   bottomSpacing: {

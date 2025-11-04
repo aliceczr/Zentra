@@ -1,8 +1,12 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { enderecoService, EnderecoData } from '../services/enderecoService';
+import { useEnderecoContext } from '../contexts/enderecoContext';
 import { useAuth } from '../contexts/AuthContext';
 
-// Interface para os dados de endereço sem user_id (será preenchido automaticamente)
+// ============================================================================
+// 📍 TYPES & INTERFACES
+// ============================================================================
+
 export interface CreateEnderecoData {
   tipo: string;
   cep: string;
@@ -17,139 +21,306 @@ export interface CreateEnderecoData {
   principal: boolean;
 }
 
-// Hook personalizado para criar endereço de usuário
-export const useCreateEndereco = () => {
+export interface EnderecoFormData {
+  tipo: string;
+  cep: string;
+  logradouro: string;
+  bairro: string;
+  cidade: string;
+  numero: string;
+  complemento: string;
+  estado: string;
+  pais: string;
+  referencia: string;
+  principal: boolean;
+}
+
+// ============================================================================
+// 🏠 HOOK PRINCIPAL DE ENDEREÇOS
+// ============================================================================
+
+/**
+ * Hook principal para gerenciar endereços do usuário
+ * Use em telas de perfil, checkout, cadastro de endereços
+ */
+export function useEndereco() {
+  const {
+    enderecos,
+    enderecoPrincipal,
+    loading,
+    error,
+    criarEndereco,
+    buscarEnderecos,
+    atualizarEndereco,
+    removerEndereco,
+    definirEnderecoPrincipal,
+    limparErro,
+    recarregarEnderecos,
+    validarEndereco
+  } = useEnderecoContext();
+
+  return {
+    // Estado
+    enderecos,
+    enderecoPrincipal,
+    loading,
+    error,
+    
+    // Ações
+    criar: criarEndereco,
+    buscar: buscarEnderecos,
+    atualizar: atualizarEndereco,
+    remover: removerEndereco,
+    definirPrincipal: definirEnderecoPrincipal,
+    
+    // Utilitários
+    limparErro,
+    recarregar: recarregarEnderecos,
+    validar: validarEndereco,
+    
+    // Propriedades derivadas
+    temEnderecos: enderecos.length > 0,
+    quantidadeEnderecos: enderecos.length,
+    enderecosResidenciais: enderecos.filter(e => e.tipo === 'residencial'),
+    enderecosComerciais: enderecos.filter(e => e.tipo === 'comercial'),
+  };
+}
+
+// ============================================================================
+// 📝 HOOK PARA CRIAÇÃO DE ENDEREÇO
+// ============================================================================
+
+/**
+ * Hook especializado para criar novo endereço
+ * Use em telas de cadastro de endereço
+ */
+export function useCriarEndereco() {
+  const { criarEndereco, loading, error, limparErro } = useEnderecoContext();
+  const [formData, setFormData] = useState<EnderecoFormData>({
+    tipo: 'residencial',
+    cep: '',
+    logradouro: '',
+    bairro: '',
+    cidade: '',
+    numero: '',
+    complemento: '',
+    estado: '',
+    pais: 'Brasil',
+    referencia: '',
+    principal: false,
+  });
+
+  const atualizarCampo = useCallback((campo: keyof EnderecoFormData, valor: string | boolean) => {
+    setFormData(prev => ({ ...prev, [campo]: valor }));
+  }, []);
+
+  const limparFormulario = useCallback(() => {
+    setFormData({
+      tipo: 'residencial',
+      cep: '',
+      logradouro: '',
+      bairro: '',
+      cidade: '',
+      numero: '',
+      complemento: '',
+      estado: '',
+      pais: 'Brasil',
+      referencia: '',
+      principal: false,
+    });
+  }, []);
+
+  const criar = useCallback(async (): Promise<boolean> => {
+    const sucesso = await criarEndereco(formData);
+    if (sucesso) {
+      limparFormulario();
+    }
+    return sucesso;
+  }, [criarEndereco, formData, limparFormulario]);
+
+  return {
+    // Estado do formulário
+    formData,
+    loading,
+    error,
+    
+    // Ações
+    atualizarCampo,
+    limparFormulario,
+    criar,
+    limparErro,
+    
+    // Validação
+    podeSubmeter: formData.cep.length === 8 && 
+                  formData.logradouro.trim() !== '' && 
+                  formData.bairro.trim() !== '' && 
+                  formData.cidade.trim() !== '' && 
+                  formData.numero.trim() !== '',
+  };
+}
+
+// ============================================================================
+// 🔍 HOOK PARA BUSCA DE CEP
+// ============================================================================
+
+/**
+ * Hook para buscar endereço por CEP
+ * Use em formulários de endereço
+ */
+export function useBuscarCEP() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { user } = useAuth();
 
-  const handleCreateEndereco = async (enderecoData: CreateEnderecoData) => {
-    // Validação de usuário autenticado
-    if (!user?.id) {
-      setError('Usuário não autenticado');
-      return false;
-    }
-
-    // Validação dos campos obrigatórios
-    const { tipo, cep, logradouro, bairro, cidade, numero, estado, pais, principal } = enderecoData;
-    
-    if (!tipo || !cep || !logradouro || !bairro || !cidade || !numero || !estado || !pais) {
-      setError('Todos os campos obrigatórios devem ser preenchidos');
-      return false;
-    }
-
-    // Validação de CEP (formato brasileiro)
-    const validateCEP = (cep: string) => {
-      const cleanCEP = cep.replace(/[^\d]/g, '');
-      return cleanCEP.length === 8;
-    };
-
-    if (!validateCEP(cep)) {
-      setError('CEP deve ter 8 dígitos');
-      return false;
-    }
-
-    // Validação de tipo de endereço
-    const tiposValidos = ['residencial', 'comercial', 'trabalho', 'outro'];
-    if (!tiposValidos.includes(tipo.toLowerCase())) {
-      setError('Tipo de endereço inválido');
-      return false;
-    }
-
+  const buscarCEP = useCallback(async (cep: string) => {
     setLoading(true);
     setError(null);
 
     try {
-      // Prepara os dados completos com user_id
-      const enderecoCompleto: EnderecoData = {
-        user_id: user.id,
-        tipo: tipo.toLowerCase(),
-        cep: cep.replace(/[^\d]/g, ''), // Remove formatação do CEP
-        logradouro,
-        bairro,
-        cidade,
-        numero,
-        complemento: enderecoData.complemento || '',
-        estado,
-        pais,
-        referencia: enderecoData.referencia || '',
-        principal
-      };
-
-      const resultado = await enderecoService.criaEndereco(enderecoCompleto);
-
-      if (resultado !== null) {
-        return true;
-      } else {
-        setError('Erro ao criar endereço');
-        return false;
-      }
+      const dadosEndereco = await enderecoService.buscarCEP(cep);
+      return dadosEndereco;
     } catch (err) {
-      const mensagem = err instanceof Error ? err.message : 'Erro desconhecido ao criar endereço';
+      const mensagem = err instanceof Error ? err.message : 'Erro ao buscar CEP';
       setError(mensagem);
-      return false;
+      return null;
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const clearError = () => setError(null);
+  const limparErro = useCallback(() => setError(null), []);
 
   return {
+    buscarCEP,
     loading,
     error,
-    handleCreateEndereco,
-    clearError,
+    limparErro,
   };
-};
+}
 
-// Hook para validação de CEP via API dos Correios (opcional)
-export const useValidateCEP = () => {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+// ============================================================================
+// 🏪 HOOK PARA CHECKOUT COM ENDEREÇO
+// ============================================================================
 
-  const validateCEP = async (cep: string) => {
-    const cleanCEP = cep.replace(/[^\d]/g, '');
+/**
+ * Hook especializado para fluxo de checkout
+ * Use em telas de pagamento e finalização de compra
+ */
+export function useEnderecoCheckout() {
+  const { enderecoPrincipal, enderecos, loading } = useEnderecoContext();
+  const [enderecoSelecionado, setEnderecoSelecionado] = useState<string | null>(null);
+
+  // Endereço para entrega (selecionado ou principal)
+  const enderecoEntrega = enderecoSelecionado 
+    ? enderecos.find(e => e.id === enderecoSelecionado) 
+    : enderecoPrincipal;
+
+  return {
+    // Estado
+    enderecoPrincipal,
+    enderecos,
+    enderecoEntrega,
+    enderecoSelecionado,
+    loading,
     
-    if (cleanCEP.length !== 8) {
-      setError('CEP deve ter 8 dígitos');
-      return null;
-    }
-
-    setLoading(true);
-    setError(null);
-
-    try {
-      const response = await fetch(`https://viacep.com.br/ws/${cleanCEP}/json/`);
-      const data = await response.json();
-
-      if (data.erro) {
-        setError('CEP não encontrado');
-        return null;
-      }
-
-      return {
-        cep: data.cep,
-        logradouro: data.logradouro,
-        bairro: data.bairro,
-        cidade: data.localidade,
-        estado: data.uf,
-        complemento: data.complemento || ''
-      };
-    } catch (err) {
-      setError('Erro ao validar CEP');
-      return null;
-    } finally {
-      setLoading(false);
-    }
+    // Ações
+    selecionarEndereco: setEnderecoSelecionado,
+    
+    // Validações
+    temEnderecoEntrega: !!enderecoEntrega,
+    podeFinalizarCompra: !!enderecoEntrega && !loading,
+    
+    // Dados formatados
+    enderecoFormatado: enderecoEntrega ? formatarEndereco(enderecoEntrega) : '',
+    
+    // Lista para seleção
+    enderecosDisponiveis: enderecos.map(endereco => ({
+      id: endereco.id!,
+      label: `${endereco.tipo} - ${endereco.logradouro}, ${endereco.numero}`,
+      completo: formatarEndereco(endereco),
+      principal: endereco.principal,
+    })),
   };
+}
 
-  const clearError = () => setError(null);
+// ============================================================================
+// 🛠️ UTILITÁRIOS
+// ============================================================================
+
+/**
+ * Formatar endereço completo
+ */
+export function formatarEndereco(endereco: any): string {
+  const partes = [
+    endereco.logradouro,
+    endereco.numero,
+    endereco.complemento && endereco.complemento.trim() !== '' ? endereco.complemento : null,
+    endereco.bairro,
+    endereco.cidade,
+    endereco.estado,
+    endereco.cep
+  ].filter(Boolean);
+  
+  return partes.join(', ');
+}
+
+/**
+ * Formatar CEP
+ */
+export function formatarCEP(cep: string): string {
+  const cepLimpo = cep.replace(/[^\d]/g, '');
+  if (cepLimpo.length === 8) {
+    return `${cepLimpo.slice(0, 5)}-${cepLimpo.slice(5)}`;
+  }
+  return cepLimpo;
+}
+
+/**
+ * Validar CEP
+ */
+export function validarCEP(cep: string): boolean {
+  const cepLimpo = cep.replace(/[^\d]/g, '');
+  return cepLimpo.length === 8;
+}
+
+/**
+ * Obter texto do tipo de endereço
+ */
+export function obterTextoTipo(tipo: string): string {
+  const tipos: Record<string, string> = {
+    'residencial': 'Residencial',
+    'comercial': 'Comercial',
+    'trabalho': 'Trabalho',
+    'outro': 'Outro',
+  };
+  
+  return tipos[tipo.toLowerCase()] || 'Outro';
+}
+
+// ============================================================================
+// 📊 HOOK PARA ESTATÍSTICAS DE ENDEREÇO
+// ============================================================================
+
+/**
+ * Hook para estatísticas e relatórios de endereços
+ * Use em telas de perfil ou dashboards
+ */
+export function useEstatisticasEndereco() {
+  const { enderecos } = useEnderecoContext();
+
+  const estatisticas = {
+    total: enderecos.length,
+    porTipo: enderecos.reduce((acc, endereco) => {
+      acc[endereco.tipo] = (acc[endereco.tipo] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>),
+    temPrincipal: enderecos.some(e => e.principal),
+    principais: enderecos.filter(e => e.principal).length,
+  };
 
   return {
-    loading,
-    error,
-    validateCEP,
-    clearError,
+    estatisticas,
+    enderecoMaisUsado: Object.entries(estatisticas.porTipo)
+      .sort(([,a], [,b]) => b - a)[0]?.[0] || null,
   };
-};
+}
+

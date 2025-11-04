@@ -5,10 +5,10 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
-  SafeAreaView,
   Alert,
   ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useListaCarrinho, useItemCarrinho } from '../../hooks/hooksCarrinho';
@@ -49,12 +49,16 @@ export default function CarrinhoScreen() {
 
   // Função para ir para checkout
   const handleIrParaCheckout = () => {
-    // Por enquanto só mostra um alert
-    Alert.alert(
-      'Checkout',
-      'Funcionalidade de checkout será implementada em breve!',
-      [{ text: 'OK' }]
-    );
+    if (isEmpty) {
+      Alert.alert(
+        'Carrinho Vazio',
+        'Adicione produtos ao carrinho para continuar.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+    
+    router.push('/(tabs)/pagamento');
   };
 
   // Componente para item do carrinho
