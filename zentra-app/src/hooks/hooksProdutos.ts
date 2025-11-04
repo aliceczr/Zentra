@@ -193,7 +193,6 @@ export function useCarrinho() {
         };
         
         setItens(prev => [...prev, novoItem]);
-        console.log('Produto adicionado ao carrinho:', produto.nome);
       }
     } catch (error) {
       console.error('Erro ao adicionar ao carrinho:', error);
@@ -235,7 +234,6 @@ export function useCarrinho() {
       setLoading(true);
       
       setItens(prev => prev.filter(item => item.produto.id !== produtoId));
-      console.log('Produto removido do carrinho:', produtoId);
     } catch (error) {
       console.error('Erro ao remover do carrinho:', error);
     } finally {
@@ -271,9 +269,6 @@ export function useProdutosList() {
     filtros,
     carregarProdutos
   } = useProdutoContext();
-  
-  console.log('📋 HOOK useProdutosList: produtos recebidos do Context:', produtos.length);
-  console.log('📋 HOOK useProdutosList: primeiro produto:', produtos[0]);
   
   // Alias para manter compatibilidade com interface anterior
   const buscar = carregarProdutos;
@@ -357,9 +352,7 @@ export function useFiltrosDinamicos() {
       setLoading(true);
       setError(null);
       
-      console.log('🔄 HOOK: Carregando filtros dinâmicos...');
       
-      // Carregar todos os filtros em paralelo
       const [fabricantesData, marcasData, categoriasData] = await Promise.all([
         buscarFabricantes(),
         buscarMarcas(),
@@ -370,16 +363,9 @@ export function useFiltrosDinamicos() {
       setMarcas(marcasData);
       setCategorias(categoriasData);
       
-      console.log('✅ HOOK: Filtros carregados:', {
-        fabricantes: fabricantesData.length - 1, // -1 para descontar "Todos"
-        marcas: marcasData.length - 1,
-        categorias: categoriasData.length - 1
-      });
-      
     } catch (err) {
       const mensagem = err instanceof Error ? err.message : 'Erro ao carregar filtros';
       setError(mensagem);
-      console.error('❌ HOOK: Erro ao carregar filtros:', err);
     } finally {
       setLoading(false);
     }

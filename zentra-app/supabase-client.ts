@@ -1,12 +1,13 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!;
+// TODO: Configure your Supabase credentials in .env file
+const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://your-project-ref.supabase.co';
+const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || 'your-anon-key-here';
 
-console.log('🔧 SUPABASE CLIENT: Configurando cliente...');
-console.log('🔧 SUPABASE URL:', supabaseUrl ? '✅ Definida' : '❌ Não definida');
-console.log('🔧 SUPABASE KEY:', supabaseAnonKey ? '✅ Definida' : '❌ Não definida');
+if (!process.env.EXPO_PUBLIC_SUPABASE_URL || !process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY) {
+  console.warn('⚠️  Supabase credentials not found in .env file. Please configure them for the app to work properly.');
+}
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
@@ -16,6 +17,4 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     detectSessionInUrl: false,
   },
 });
-
-console.log('✅ SUPABASE CLIENT: Cliente criado com persistência habilitada');
 

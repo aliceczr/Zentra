@@ -67,12 +67,7 @@ export function ProdutoProvider({ children }: ProdutoProviderProps) {
       
       const filtrosParaUsar = novosFiltros || filtros;
       
-      console.log('🔍 Context: Iniciando carregamento com filtros:', filtrosParaUsar);
-      
       const produtosCarregados = await buscarProdutos(filtrosParaUsar);
-      
-      console.log('✅ Context: Produtos carregados:', produtosCarregados.length, 'produtos');
-      console.log('📦 Context: Primeiro produto:', produtosCarregados[0]);
       
       setProdutos(produtosCarregados);
       

@@ -26,20 +26,13 @@ export function useHistoricoPedidos() {
 
       // Verificar se usuário está logado
       if (!user?.id) {
-        console.log('ℹ️ Usuário não logado, não carregando pedidos');
         setPedidos([]);
         return;
       }
-
-      console.log('🔍 Carregando pedidos para usuário:', user.id);
       
-      // Usar o ID do usuário logado (UUID string direto)
       const filtros: FiltrosPedidos = { usuario_id: user.id };
       const resultado = await buscarPedidosService(filtros);
 
-      console.log('📊 Pedidos carregados:', resultado);
-
-      // Garantir ordenação por data (mais recente primeiro)
       resultado.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
       setPedidos(resultado);

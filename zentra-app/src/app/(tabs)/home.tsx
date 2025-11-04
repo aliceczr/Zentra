@@ -24,27 +24,14 @@ export default function HomeScreen() {
   const { profile, fetchUserProfile } = useUser();
   const { quantidade } = useCarrinhoContador();
   
-  console.log('🏠 HOME: Componente renderizado com', produtos.length, 'produtos');
-  console.log('🏠 HOME: Primeiro produto:', produtos[0]);
-  console.log('🏠 HOME: Estado do usuário:', { 
-    user: user?.email, 
-    profile: profile?.nome,
-    hasProfile: !!profile 
-  });
-
   // Limpar filtros e recarregar produtos quando voltar para a home
   useFocusEffect(
     React.useCallback(() => {
-      console.log('🏠 HOME: useFocusEffect executado - limpando filtros e recarregando');
-      // Limpa os filtros e recarrega todos os produtos
       limparFiltros();
       carregarProdutos({});
       // Buscar perfil do usuário
       if (user) {
-        console.log('👤 HOME: Usuário encontrado, buscando perfil...', user.email);
         fetchUserProfile();
-      } else {
-        console.log('❌ HOME: Nenhum usuário encontrado para buscar perfil');
       }
     }, [user])
   );

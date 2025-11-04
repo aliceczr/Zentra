@@ -25,20 +25,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isRegistering, setIsRegistering] = useState(false);
 
   useEffect(() => {
-    // ✅ Verificar se já existe usuário logado ao iniciar o app
     const getInitialUser = async () => {
       try {
-        console.log('🔍 Verificando se existe usuário logado...');
         const currentUser = await authService.getCurrentUser();
         
         if (currentUser) {
-          console.log('✅ Usuário já logado encontrado:', currentUser.email);
           setUser(currentUser);
-        } else {
-          console.log('ℹ️ Nenhum usuário logado encontrado');
         }
       } catch (error) {
-        console.error('❌ Erro ao verificar usuário:', error);
+        console.error('Erro ao verificar usuário:', error);
       } finally {
         setLoading(false);
       }
@@ -46,9 +41,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     getInitialUser();
 
-    // Escutar mudanças de autenticação
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('🔐 Auth state change:', { event, user: session?.user?.email });
       setUser(session?.user ?? null);
       setLoading(false);
     });
@@ -58,12 +51,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const signUp = async (email: string, password: string): Promise<any> => {
     try {
-      console.log('🔐 AuthContext.signUp chamado');
       const result = await authService.signUp({ email, password });
-      console.log('✅ authService.signUp resultado:', result);
       return result;
     } catch (error) {
-      console.error('❌ Erro no AuthContext.signUp:', error);
       throw error;
     }
   };

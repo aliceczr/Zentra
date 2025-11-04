@@ -237,27 +237,3 @@ export function useCarrinhoPersistencia() {
   };
 }
 
-/**
- * Hook para debug - informações técnicas do carrinho
- */
-export function useCarrinhoDebug() {
-  const context = useCarrinhoContext();
-  
-  return {
-    estadoCompleto: context,
-    quantidadeItens: context.itens.length,
-    ultimoItem: context.itens[context.itens.length - 1],
-    primeiroItem: context.itens[0],
-    temErros: !!context.error,
-    
-    // Função para log do estado
-    logEstado: () => {
-      console.log('🛒 Estado do Carrinho:', {
-        itens: context.itens.length,
-        valor: context.resumo.valorTotal,
-        loading: context.loading,
-        error: context.error,
-      });
-    },
-  };
-}

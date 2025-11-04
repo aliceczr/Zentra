@@ -8,11 +8,8 @@ export const useAuthForm = () => {
   const { signUp, signIn } = useAuthContext();
 
   const handleSignUp = async (email: string, password: string, confirmPassword: string) => {
-    console.log('🔐 useAuthForm.handleSignUp chamado');
-    
     if (password !== confirmPassword) {
       setError('As senhas não coincidem!');
-      console.error('❌ Senhas não coincidem');
       return false;
     }
 

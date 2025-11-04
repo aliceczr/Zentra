@@ -138,9 +138,6 @@ export default function EditarEnderecoModal({
       setCidade(data.localidade || '');
       setEstado(data.uf || '');
       
-      // Focar no campo número
-      console.log('✅ CEP encontrado:', data);
-      
     } catch (error) {
       console.error('Erro ao buscar CEP:', error);
       Alert.alert('Erro', 'Não foi possível buscar o CEP. Verifique sua conexão.');
