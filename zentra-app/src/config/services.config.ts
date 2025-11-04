@@ -18,8 +18,8 @@ export const DATABASE_CONFIG = {
   ENDERECO_SERVICE_USE_SUPABASE: true,  // ✅ Sistema de endereços  
   PRODUTO_SERVICE_USE_SUPABASE: true,   // ✅ Catálogo de produtos
   CARRINHO_SERVICE_USE_SUPABASE: true,  // ✅ Carrinho de compras
-  PEDIDO_SERVICE_USE_SUPABASE: false,   // ⏳ Sistema de pedidos (em desenvolvimento)
-  PAGAMENTO_SERVICE_USE_SUPABASE: false, // ⏳ Sistema de pagamentos (em desenvolvimento)
+  PEDIDO_SERVICE_USE_SUPABASE: true,   // ⏳ Sistema de pedidos (em desenvolvimento)
+  PAGAMENTO_SERVICE_USE_SUPABASE: true, // ⏳ Sistema de pagamentos (em desenvolvimento)
   
   // Configurações avançadas
   ENABLE_LOGGING: true,                 // Habilitar logs detalhados
@@ -150,16 +150,6 @@ export const DEV_CONFIG = {
   ENABLE_ADMIN_FEATURES: __DEV__,   // Habilitar recursos de admin em dev
 } as const;
 
-// ============================================================================
-// 📊 CONFIGURAÇÕES DE ANALYTICS (FUTURO)
-// ============================================================================
-
-export const ANALYTICS_CONFIG = {
-  ENABLE_ANALYTICS: false,          // Habilitar analytics
-  TRACK_USER_BEHAVIOR: false,       // Rastrear comportamento do usuário
-  TRACK_PERFORMANCE: false,         // Rastrear performance
-  TRACK_ERRORS: true,               // Rastrear erros sempre
-} as const;
 
 // ============================================================================
 // 🎉 EXPORT DEFAULT CONFIG
@@ -171,7 +161,6 @@ export default {
   PERFORMANCE: PERFORMANCE_CONFIG,
   SECURITY: SECURITY_CONFIG,
   DEV: DEV_CONFIG,
-  ANALYTICS: ANALYTICS_CONFIG,
   
   // Funções utilitárias
   getMigrationStatus,
