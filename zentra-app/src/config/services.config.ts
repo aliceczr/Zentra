@@ -24,7 +24,6 @@ export const DATABASE_CONFIG = {
   // Configurações avançadas
   ENABLE_LOGGING: true,                 // Habilitar logs detalhados
   ENABLE_ERROR_TRACKING: true,          // Habilitar rastreamento de erros
-  MOCK_DELAY_MS: 300,                   // Delay simulado para mocks (ms)
 } as const;
 
 // ============================================================================

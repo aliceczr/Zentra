@@ -21,33 +21,30 @@ export default function Entrar() {
     if (success) {
       console.log('✅ Login realizado! Verificando perfil...');
       
-      // Pequeno delay para garantir que o contexto seja atualizado
-      setTimeout(async () => {
-        try {
-          // Verificar se usuário tem perfil completo
-          const profile = await userService.getUserProfile();
-          
-          if (profile) {
-            console.log('✅ Perfil encontrado, redirecionando para home');
-            Alert.alert('Bem-vindo de volta!', 'Login realizado com sucesso!');
-            router.replace('/(tabs)/home');
-          } else {
-            console.log('ℹ️ Perfil não encontrado, redirecionando para completar');
-            Alert.alert(
-              'Complete seu perfil',
-              'Para continuar, complete seus dados pessoais.',
-              [{ text: 'OK', onPress: () => router.replace('/completar-perfil') }]
-            );
-          }
-        } catch (error) {
-          console.log('ℹ️ Erro ao buscar perfil (provavelmente não existe), redirecionando para completar');
+      // Verificar se usuário tem perfil completo
+      try {
+        const profile = await userService.getUserProfile();
+        
+        if (profile) {
+          console.log('✅ Perfil encontrado, redirecionando para home');
+          Alert.alert('Bem-vindo de volta!', 'Login realizado com sucesso!');
+          router.replace('/(tabs)/home');
+        } else {
+          console.log('ℹ️ Perfil não encontrado, redirecionando para completar');
           Alert.alert(
             'Complete seu perfil',
             'Para continuar, complete seus dados pessoais.',
             [{ text: 'OK', onPress: () => router.replace('/completar-perfil') }]
           );
         }
-      }, 1000);
+      } catch (error) {
+        console.log('ℹ️ Erro ao buscar perfil (provavelmente não existe), redirecionando para completar');
+        Alert.alert(
+          'Complete seu perfil',
+          'Para continuar, complete seus dados pessoais.',
+          [{ text: 'OK', onPress: () => router.replace('/completar-perfil') }]
+        );
+      }
       
       // Limpar campos
       setEmail('');
