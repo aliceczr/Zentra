@@ -49,6 +49,8 @@ export default function HomeScreen() {
     router.push(`/produto/${produtoId}` as any);
   };
 
+
+
   const renderProdutoPromocao = ({ item }: { item: any }) => {
     console.log('🖼️ HOME: Renderizando produto:', item.nome);
     console.log('🖼️ HOME: URL da imagem:', item.imagem_principal);
@@ -143,6 +145,8 @@ export default function HomeScreen() {
               <Ionicons name="medical" size={60} color="#48C9B0" />
             </View>
           </View>
+          
+
         </View>
 
         {/* Categorias Rápidas */}
@@ -512,4 +516,6 @@ const styles = StyleSheet.create({
   bottomSpacing: {
     height: 20,
   },
+  
+
 });

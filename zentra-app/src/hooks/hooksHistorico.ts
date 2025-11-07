@@ -8,10 +8,7 @@ import {
 } from '../services/pedidoService';
 import { useAuth } from '../contexts/AuthContext';
 
-// ============================================================================
-// HOOK SIMPLES PARA HISTÓRICO DE PEDIDOS (SEM FILTROS)
-// - Mantemos o código simples e compatível com Supabase (calls isoladas ao service)
-// ============================================================================
+
 
 export function useHistoricoPedidos() {
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
@@ -60,9 +57,7 @@ export function useHistoricoPedidos() {
   return { pedidos, loading, error, estatisticas, recarregar };
 }
 
-// ============================================================================
-// HOOK PARA DETALHES DE UM PEDIDO
-// ============================================================================
+
 
 export function usePedidoDetalhes(pedidoId: number | null) {
   const [pedido, setPedido] = useState<Pedido | null>(null);
@@ -105,21 +100,43 @@ export function usePedidoDetalhes(pedidoId: number | null) {
   return { pedido, loading, error, recarregar };
 }
 
-// ============================================================================
-// FUNÇÕES AUXILIARES
-// ============================================================================
 
-export function formatarStatusPedido(status: StatusPedido): { texto: string; cor: string; icone: string } {
-  const statusMap: Record<string, { texto: string; cor: string; icone: string }> = {
+
+export function formatarStatusPedido(pedido: Pedido): { texto: string; cor: string; icone: string } {
+  // 🎯 DEBUG - Vamos ver o que está chegando
+  console.log('🔍 DEBUG formatarStatusPedido - Pedido:', pedido.codigo_pedido);
+  console.log('🔍 DEBUG formatarStatusPedido - Pagamentos:', pedido.pagamentos);
+  
+  // 🎯 PRIORIZAR STATUS DO PAGAMENTO (se existir)
+  // Acessar como any porque a interface pode não estar sincronizada com a tabela real
+  const pagamentoAtivo = pedido.pagamentos?.find((p: any) => p.status === 'approved') || pedido.pagamentos?.[0];
+  
+  if (pagamentoAtivo) {
+    console.log('🔍 DEBUG - Pagamento ativo encontrado:', pagamentoAtivo);
+    const statusPagamentoMap: Record<string, { texto: string; cor: string; icone: string }> = {
+      'pending': { texto: 'Pagamento Pendente', cor: '#f39c12', icone: 'time-outline' },
+      'approved': { texto: 'Pagamento Aprovado', cor: '#27ae60', icone: 'checkmark-circle-outline' },
+      'rejected': { texto: 'Pagamento Recusado', cor: '#e74c3c', icone: 'close-circle-outline' },
+      'cancelled': { texto: 'Pagamento Cancelado', cor: '#e74c3c', icone: 'close-circle-outline' },
+    };
+    
+    const statusFormatado = statusPagamentoMap[(pagamentoAtivo as any).status];
+    if (statusFormatado) {
+      return statusFormatado;
+    }
+  }
+
+  // ✅ FALLBACK: Status do pedido (caso não tenha pagamento)
+  const statusPedidoMap: Record<string, { texto: string; cor: string; icone: string }> = {
     CRIADO: { texto: 'Processando', cor: '#f39c12', icone: 'sync-outline' },
     PAGO: { texto: 'Pagamento Aprovado', cor: '#3498db', icone: 'card-outline' },
-    PREPARANDO: { texto: 'Processando', cor: '#f39c12', icone: 'sync-outline' },
-    ENVIADO: { texto: 'Processando', cor: '#f39c12', icone: 'sync-outline' },
+    PREPARANDO: { texto: 'Preparando', cor: '#f39c12', icone: 'sync-outline' },
+    ENVIADO: { texto: 'Em Transporte', cor: '#3498db', icone: 'car-outline' },
     ENTREGUE: { texto: 'Finalizado', cor: '#27ae60', icone: 'checkmark-circle-outline' },
     CANCELADO: { texto: 'Cancelado', cor: '#e74c3c', icone: 'close-circle-outline' },
   };
 
-  return statusMap[status] || statusMap['CRIADO'];
+  return statusPedidoMap[pedido.status] || statusPedidoMap['CRIADO'];
 }
 
 export function formatarTempoEntrega(minutos: number): string {

@@ -58,7 +58,7 @@ export default function CarrinhoScreen() {
       return;
     }
     
-    router.push('/(tabs)/pagamento');
+    router.push('/(tabs)/pagamentos');
   };
 
   // Componente para item do carrinho

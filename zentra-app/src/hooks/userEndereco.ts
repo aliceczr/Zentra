@@ -3,9 +3,6 @@ import { enderecoService, EnderecoData } from '../services/enderecoService';
 import { useEnderecoContext } from '../contexts/enderecoContext';
 import { useAuth } from '../contexts/AuthContext';
 
-// ============================================================================
-// 📍 TYPES & INTERFACES
-// ============================================================================
 
 export interface CreateEnderecoData {
   tipo: string;
@@ -35,9 +32,6 @@ export interface EnderecoFormData {
   principal: boolean;
 }
 
-// ============================================================================
-// 🏠 HOOK PRINCIPAL DE ENDEREÇOS
-// ============================================================================
 
 /**
  * Hook principal para gerenciar endereços do usuário
@@ -86,9 +80,6 @@ export function useEndereco() {
   };
 }
 
-// ============================================================================
-// 📝 HOOK PARA CRIAÇÃO DE ENDEREÇO
-// ============================================================================
 
 /**
  * Hook especializado para criar novo endereço
@@ -159,9 +150,6 @@ export function useCriarEndereco() {
   };
 }
 
-// ============================================================================
-// 🔍 HOOK PARA BUSCA DE CEP
-// ============================================================================
 
 /**
  * Hook para buscar endereço por CEP
@@ -197,9 +185,6 @@ export function useBuscarCEP() {
   };
 }
 
-// ============================================================================
-// 🏪 HOOK PARA CHECKOUT COM ENDEREÇO
-// ============================================================================
 
 /**
  * Hook especializado para fluxo de checkout
@@ -242,9 +227,6 @@ export function useEnderecoCheckout() {
   };
 }
 
-// ============================================================================
-// 🛠️ UTILITÁRIOS
-// ============================================================================
 
 /**
  * Formatar endereço completo
@@ -296,9 +278,7 @@ export function obterTextoTipo(tipo: string): string {
   return tipos[tipo.toLowerCase()] || 'Outro';
 }
 
-// ============================================================================
-// 📊 HOOK PARA ESTATÍSTICAS DE ENDEREÇO
-// ============================================================================
+
 
 /**
  * Hook para estatísticas e relatórios de endereços

@@ -1,14 +1,6 @@
 import { useCarrinhoContext } from '../contexts/carrinhoContext';
 import { Produto } from '../services/produtoService';
 
-// ============================================================================
-// 🪝 HOOKS ESPECIALIZADOS PARA CARRINHO
-// ============================================================================
-
-/**
- * Hook principal do carrinho - acesso completo
- * Use quando precisar de todas as funcionalidades
- */
 export function useCarrinho() {
   const context = useCarrinhoContext();
   
@@ -41,10 +33,7 @@ export function useCarrinho() {
   };
 }
 
-/**
- * Hook especializado para contador do carrinho
- * Use em badges, headers, etc. - otimizado para performance
- */
+
 export function useCarrinhoContador() {
   const { resumo, loading } = useCarrinhoContext();
   
@@ -60,10 +49,7 @@ export function useCarrinhoContador() {
   };
 }
 
-/**
- * Hook especializado para adicionar produtos
- * Use em botões "Adicionar ao Carrinho"
- */
+
 export function useAdicionarAoCarrinho() {
   const { adicionarProduto, temNoCarrinho, obterQuantidade, loading } = useCarrinhoContext();
   
@@ -85,10 +71,7 @@ export function useAdicionarAoCarrinho() {
   };
 }
 
-/**
- * Hook especializado para gerenciar item individual
- * Use em listas do carrinho, cards de produto
- */
+
 export function useItemCarrinho(produtoId: number) {
   const { 
     temNoCarrinho, 
@@ -114,14 +97,11 @@ export function useItemCarrinho(produtoId: number) {
     
     // Propriedades derivadas
     podeDecrementar: quantidade > 1,
-    podeIncrementar: true, // Ou implemente limite de estoque
+    podeIncrementar: true,
   };
 }
 
-/**
- * Hook especializado para lista do carrinho
- * Use na tela principal do carrinho
- */
+
 export function useListaCarrinho() {
   const { 
     itens, 
@@ -156,10 +136,7 @@ export function useListaCarrinho() {
   };
 }
 
-/**
- * Hook especializado para validação do carrinho
- * Use quando app volta do background, navegação, etc.
- */
+
 export function useCarrinhoValidacao() {
   const { validarCarrinho, recarregarCarrinho, loading, error } = useCarrinhoContext();
   
@@ -178,10 +155,7 @@ export function useCarrinhoValidacao() {
   };
 }
 
-/**
- * Hook especializado para checkout/finalização
- * Use em telas de checkout, pagamento
- */
+
 export function useCarrinhoCheckout() {
   const { itens, resumo, loading, validarCarrinho } = useCarrinhoContext();
   
@@ -219,13 +193,7 @@ export function useCarrinhoCheckout() {
   };
 }
 
-// ============================================================================
-// 🎯 HOOKS UTILITÁRIOS
-// ============================================================================
-
-/**
- * Hook para persistência - monitorar mudanças no carrinho
- */
+ 
 export function useCarrinhoPersistencia() {
   const { itens, loading } = useCarrinhoContext();
   

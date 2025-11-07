@@ -190,9 +190,6 @@ export function PagamentoProvider({ children }: PagamentoProviderProps) {
     );
   };
 
-  // ================================
-  // AÇÕES - FILTROS E ESTADO
-  // ================================
 
   const atualizarFiltros = (novosFiltros: Partial<FiltrosPagamentos>): void => {
     setFiltros((prev: FiltrosPagamentos) => ({ ...prev, ...novosFiltros }));
@@ -225,9 +222,6 @@ export function PagamentoProvider({ children }: PagamentoProviderProps) {
     }
   };
 
-  // ================================
-  // CONTEXT VALUE
-  // ================================
 
   const contextValue: PagamentoContextType = {
     // Estado
@@ -263,9 +257,6 @@ export function PagamentoProvider({ children }: PagamentoProviderProps) {
   );
 }
 
-// ================================
-// HOOK PARA USAR O CONTEXT
-// ================================
 
 export function usePagamentoContext() {
   const context = useContext(PagamentoContext);

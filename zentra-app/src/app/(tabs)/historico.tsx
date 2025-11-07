@@ -29,7 +29,7 @@ interface PedidoCardProps {
 }
 
 function PedidoCard({ pedido, onPress }: PedidoCardProps) {
-  const statusInfo = formatarStatusPedido(pedido.status);
+  const statusInfo = formatarStatusPedido(pedido); // ✅ Passa o pedido completo
   const temMedicamentoControlado = pedido.itens?.some(item => 
     item.produto?.controlado || item.produto?.requer_receita
   ) || false;

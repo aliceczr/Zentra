@@ -243,14 +243,7 @@ export function useStatusPagamento(pagamentoId?: number) {
   };
 }
 
-// ================================
-// HOOK PARA CHECKOUT
-// ================================
 
-/**
- * Hook especializado para fluxo de checkout
- * Use em telas de finalização de compra
- */
 export function useCheckoutPagamento() {
   const { criarNovoPagamento, metodosUsuario, metodoPrincipal } = usePagamentoContext();
   const [etapaAtual, setEtapaAtual] = useState<'metodo' | 'dados' | 'confirmacao' | 'processando' | 'concluido'>('metodo');
@@ -309,13 +302,7 @@ export function useCheckoutPagamento() {
   };
 }
 
-// ================================
-// FUNÇÕES UTILITÁRIAS
-// ================================
 
-/**
- * Formatar valor monetário
- */
 export function formatarValor(valor: number): string {
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',

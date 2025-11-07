@@ -3,9 +3,8 @@ import {supabase} from '../../supabase-client';
 import { PostgrestError } from '@supabase/supabase-js';
 
 
-// Interface para produtos vindos do banco (com ID)
 export interface Produto {
-  id: number; // ID gerado automaticamente pelo banco
+  id: number; 
   categoria_id: number;
   nome: string;
   descricao?: string;
@@ -28,7 +27,6 @@ export interface Produto {
   ativo: boolean;
   criado_em?: string;
   atualizado_em?: string;
-  // Novos campos para detalhes
   bula_url?: string;
   registro_ms?: string;
   principio_ativo?: string;
@@ -36,7 +34,7 @@ export interface Produto {
   apresentacao?: string;
 }
 
-// Interface para criar produtos (sem ID - banco vai gerar)
+
 export interface CriarProduto {
   categoria_id: number;
   nome: string;
@@ -60,7 +58,6 @@ export interface CriarProduto {
   ativo?: boolean;
 }
 
-// Interface para filtros de busca
 export interface FiltrosProduto {
   categoria_id?: number;
   destaque?: boolean;
@@ -71,14 +68,12 @@ export interface FiltrosProduto {
   preco_max?: number;
   fabricante?: string;
   marca?: string;
-  busca?: string; // busca por nome ou descrição
+  busca?: string; 
 }
 
 
 
-// =============================================================================
-// 🟢 SUPABASE FUNCTIONS
-// =============================================================================
+
 export async function buscarProdutos(filtros?: FiltrosProduto): Promise<Produto[]> {
   try {
     let query = supabase
@@ -152,11 +147,7 @@ export async function buscarPorId(id: number): Promise<Produto | null> {
   }
 }
 
-// =============================================================================
-// 🏭 FUNÇÕES PARA FILTROS DINÂMICOS
-// =============================================================================
 
-// Interface para opções de filtro
 export interface FiltroOpcao {
   id: string;
   label: string;
@@ -264,7 +255,7 @@ export async function buscarMarcas(): Promise<FiltroOpcao[]> {
   }
 }
 
-// Buscar categorias do banco (bonus - para também ser dinâmico)
+// Buscar categorias do banco 
 export async function buscarCategorias(): Promise<FiltroOpcao[]> {
   try {
     

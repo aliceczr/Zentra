@@ -505,17 +505,11 @@ class SupabasePedidoService {
   }
 }
 
-// ================================
-// INSTÂNCIA ÚNICA DO SERVICE
-// ================================
+
 
 const supabasePedidoService = new SupabasePedidoService();
 
-// ================================
-// FUNÇÕES PÚBLICAS DO SERVICE
-// ================================
 
-// PEDIDOS
 export async function criarPedido(dados: CriarPedido): Promise<Pedido> {
   return await supabasePedidoService.criarPedido(dados);
 }
@@ -553,10 +547,6 @@ export async function atualizarPagamento(id: number, dados: AtualizarPagamento):
 export async function buscarMetodosUsuario(usuarioId: string): Promise<MetodoPagamentoUsuario[]> {
   return await supabasePedidoService.buscarMetodosUsuario(usuarioId);
 }
-
-// ================================
-// FUNÇÕES AUXILIARES
-// ================================
 
 export function formatarCodigoPedido(id: number): string {
   return `ZEN-${String(id).padStart(3, '0')}`;

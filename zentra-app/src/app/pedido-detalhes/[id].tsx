@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
 import { 
   usePedidoDetalhes, 
   formatarStatusPedido, 
@@ -18,6 +18,19 @@ import {
   calcularTempoDecorrido,
   formatarTempoEntrega
 } from '../../hooks/hooksHistorico';
+
+// 🔧 Função auxiliar para status individual (usar só no timeline)
+function formatarStatusIndividual(status: StatusPedido): { texto: string; cor: string; icone: string } {
+  const statusMap: Record<string, { texto: string; cor: string; icone: string }> = {
+    CRIADO: { texto: 'Processando', cor: '#f39c12', icone: 'sync-outline' },
+    PAGO: { texto: 'Pagamento Aprovado', cor: '#3498db', icone: 'card-outline' },
+    PREPARANDO: { texto: 'Preparando', cor: '#f39c12', icone: 'sync-outline' },
+    ENVIADO: { texto: 'Em Transporte', cor: '#3498db', icone: 'car-outline' },
+    ENTREGUE: { texto: 'Finalizado', cor: '#27ae60', icone: 'checkmark-circle-outline' },
+    CANCELADO: { texto: 'Cancelado', cor: '#e74c3c', icone: 'close-circle-outline' },
+  };
+  return statusMap[status] || statusMap['CRIADO'];
+}
 import { formatarValor } from '../../hooks/hooksPagamento';
 import { Pedido, StatusPedido } from '../../services/pedidoService';
 
@@ -30,6 +43,29 @@ interface StatusTimelineProps {
 }
 
 function StatusTimeline({ pedido }: StatusTimelineProps) {
+  // 🎯 VERIFICAR SE PAGAMENTO ESTÁ APROVADO
+  const pagamentoAprovado = pedido.pagamentos?.some((p: any) => p.status === 'approved');
+  
+  // 🎯 SE PAGAMENTO APROVADO = APENAS 1 ETAPA
+  if (pagamentoAprovado) {
+    return (
+      <View style={styles.timelineContainer}>
+        <View style={styles.timelineItem}>
+          <View style={[styles.timelineIcon, { backgroundColor: '#27ae60' }]}>
+            <Ionicons name="checkmark-circle" size={20} color="#fff" />
+          </View>
+          <View style={styles.timelineContent}>
+            <Text style={styles.timelineTitle}>Pagamento Aprovado</Text>
+            <Text style={styles.timelineData}>
+              {formatarDataPedido(pedido.created_at)}
+            </Text>
+          </View>
+        </View>
+      </View>
+    );
+  }
+
+  // ✅ LÓGICA ORIGINAL PARA PEDIDOS SEM PAGAMENTO MP
   const statusSequencia: StatusPedido[] = ['CRIADO', 'PAGO', 'PREPARANDO', 'ENVIADO', 'ENTREGUE'];
   const statusAtualIndex = statusSequencia.indexOf(pedido.status);
   const isCancelado = pedido.status === 'CANCELADO';
@@ -57,7 +93,7 @@ function StatusTimeline({ pedido }: StatusTimelineProps) {
       {statusSequencia.map((status, index) => {
         const isCompleted = index <= statusAtualIndex;
         const isCurrent = index === statusAtualIndex;
-        const statusInfo = formatarStatusPedido(status);
+        const statusInfo = formatarStatusIndividual(status);
         
         let dataExibicao = '';
         if (status === 'CRIADO') dataExibicao = pedido.created_at;
@@ -230,35 +266,39 @@ function PagamentoInfo({ pedido }: PagamentoInfoProps) {
   
   if (!pagamento) return null;
 
+  // ✅ USAR CAMPOS REAIS DA TABELA PAGAMENTOS (MP)
+  const pagamentoData = pagamento as any; // Cast para acessar campos do MP
+  
   const statusInfo = {
-    'PENDENTE': { cor: '#f39c12', texto: 'Pendente' },
-    'PROCESSANDO': { cor: '#3498db', texto: 'Processando' },
-    'APROVADO': { cor: '#27ae60', texto: 'Aprovado' },
-    'RECUSADO': { cor: '#e74c3c', texto: 'Recusado' },
-    'CANCELADO': { cor: '#95a5a6', texto: 'Cancelado' },
-    'ESTORNADO': { cor: '#e67e22', texto: 'Estornado' },
+    'pending': { cor: '#f39c12', texto: 'Pendente' },
+    'approved': { cor: '#27ae60', texto: 'Pagamento Aprovado' },
+    'rejected': { cor: '#e74c3c', texto: 'Recusado' },
+    'cancelled': { cor: '#95a5a6', texto: 'Cancelado' },
   };
 
-  const status = statusInfo[pagamento.status_pagamento] || statusInfo['PENDENTE'];
+  const status = statusInfo[pagamentoData.status as keyof typeof statusInfo] || statusInfo['pending'];
 
-  const metodoTexto = {
-    'CARTAO_CREDITO': 'Cartão de Crédito',
-    'CARTAO_DEBITO': 'Cartão de Débito',
-    'PIX': 'PIX',
-    'BOLETO': 'Boleto',
-    'DINHEIRO': 'Dinheiro'
+  // ✅ DETECTAR MÉTODO BASEADO NO PAYMENT_TYPE (se disponível)
+  const detectarMetodo = () => {
+    if (pagamentoData.payment_type === 'credit_card') return 'Cartão de Crédito';
+    if (pagamentoData.payment_type === 'debit_card') return 'Cartão de Débito';
+    if (pagamentoData.payment_type === 'account_money') return 'Saldo MP';
+    return null; // Não mostrar se não souber
   };
+
+  const metodoPagamento = detectarMetodo();
 
   return (
     <View style={styles.pagamentoContainer}>
       <Text style={styles.secaoTitulo}>Informações de Pagamento</Text>
       
-      <View style={styles.pagamentoItem}>
-        <Text style={styles.pagamentoLabel}>Método:</Text>
-        <Text style={styles.pagamentoValor}>
-          {metodoTexto[pagamento.metodo_pagamento] || pagamento.metodo_pagamento}
-        </Text>
-      </View>
+      {/* ✅ SÓ MOSTRAR MÉTODO SE TIVER A INFORMAÇÃO */}
+      {metodoPagamento && (
+        <View style={styles.pagamentoItem}>
+          <Text style={styles.pagamentoLabel}>Método:</Text>
+          <Text style={styles.pagamentoValor}>{metodoPagamento}</Text>
+        </View>
+      )}
       
       <View style={styles.pagamentoItem}>
         <Text style={styles.pagamentoLabel}>Status:</Text>
@@ -269,30 +309,22 @@ function PagamentoInfo({ pedido }: PagamentoInfoProps) {
       
       <View style={styles.pagamentoItem}>
         <Text style={styles.pagamentoLabel}>Valor Pago:</Text>
-        <Text style={styles.pagamentoValor}>{formatarValor(pagamento.valor_pago)}</Text>
+        <Text style={styles.pagamentoValor}>{formatarValor(pagamentoData.valor_pago)}</Text>
       </View>
       
-      {pagamento.parcelas > 1 && (
+      {/* ✅ REMOVER CAMPOS QUE NÃO EXISTEM NO MP */}
+      {pagamentoData.payment_id && (
         <View style={styles.pagamentoItem}>
-          <Text style={styles.pagamentoLabel}>Parcelas:</Text>
-          <Text style={styles.pagamentoValor}>
-            {pagamento.parcelas}x de {formatarValor(pagamento.valor_parcela || 0)}
-          </Text>
+          <Text style={styles.pagamentoLabel}>ID Pagamento:</Text>
+          <Text style={styles.pagamentoValor}>{pagamentoData.payment_id}</Text>
         </View>
       )}
       
-      {pagamento.codigo_transacao && (
+      {pagamentoData.data_aprovacao && (
         <View style={styles.pagamentoItem}>
-          <Text style={styles.pagamentoLabel}>Código:</Text>
-          <Text style={styles.pagamentoValor}>{pagamento.codigo_transacao}</Text>
-        </View>
-      )}
-      
-      {pagamento.data_confirmacao && (
-        <View style={styles.pagamentoItem}>
-          <Text style={styles.pagamentoLabel}>Confirmado em:</Text>
+          <Text style={styles.pagamentoLabel}>Aprovado em:</Text>
           <Text style={styles.pagamentoValor}>
-            {formatarDataPedido(pagamento.data_confirmacao)}
+            {formatarDataPedido(pagamentoData.data_aprovacao)}
           </Text>
         </View>
       )}
@@ -375,12 +407,14 @@ export default function PedidoDetalhesScreen() {
   }
 
   const podeSerCancelado = ['CRIADO', 'PAGO', 'PREPARANDO'].includes(pedido.status);
-  const statusInfo = formatarStatusPedido(pedido.status);
+  const statusInfo = formatarStatusPedido(pedido); // ✅ Passa pedido completo
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
+    <>
+      <Stack.Screen options={{ headerShown: false }} />
+      <SafeAreaView style={styles.container}>
+        {/* Header */}
+        <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={24} color="#333" />
         </TouchableOpacity>
@@ -484,6 +518,7 @@ export default function PedidoDetalhesScreen() {
         </View>
       </ScrollView>
     </SafeAreaView>
+    </>
   );
 }
 
@@ -495,6 +530,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8f9fa',
+    paddingTop: 0, // ✅ Remove espaçamento superior extra
   },
   
   // Header
@@ -507,6 +543,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
+    paddingTop: 10, // ✅ Controla o espaçamento superior do header
   },
   headerTitle: {
     fontSize: 18,

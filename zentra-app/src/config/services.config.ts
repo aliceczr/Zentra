@@ -75,10 +75,6 @@ export function logMigrationStatus() {
 // 🎯 CONSTANTES DE TABELAS
 // ============================================================================
 
-/**
- * Nomes das tabelas no Supabase
- * Centralizados para evitar erros de digitação
- */
 export const SUPABASE_TABLES = {
   PERFIL_USUARIO: 'perfil_usuario',
   ENDERECO_USUARIO: 'endereco_usuario', 
@@ -140,10 +136,7 @@ export const DEV_CONFIG = {
   // Ambiente
   IS_DEVELOPMENT: __DEV__,          // Detecta automaticamente se é dev
   SHOW_DEBUG_LOGS: __DEV__,         // Mostrar logs de debug apenas em dev
-  
-  // Mock específico para desenvolvimento
-  USE_MOCK_IMAGES: true,            // Usar imagens placeholder em dev
-  SIMULATE_SLOW_NETWORK: false,     // Simular rede lenta para testes
+
   
   // Testes
   ENABLE_TEST_USERS: __DEV__,       // Habilitar usuários de teste
