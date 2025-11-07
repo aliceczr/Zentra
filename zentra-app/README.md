@@ -56,58 +56,6 @@ O projeto segue uma arquitetura em camadas com separação de responsabilidades,
 └─────────────────────────────────────────────┘
 ```
 
-### **Camadas da Aplicação**
-
-#### 🎯 **Services** (`src/services/`)
-Responsável pela comunicação com APIs externas, Supabase e armazenamento local:
-- `authService.ts` - Autenticação, login e cadastro
-- `userService.ts` - Gestão de perfis de usuário
-- `produtoService.ts` - Catálogo e busca de produtos
-- `carrinhoService.ts` - Operações do carrinho de compras
-- `enderecoService.ts` - CRUD de endereços
-- `pagamentoService.ts` - Processamento de pagamentos
-- `pedidoService.ts` - Gestão de pedidos
-- `mercadoPagoService.ts` - Integração com Mercado Pago
-- `storageService.ts` - Persistência local de dados
-
-#### 🌐 **Contexts** (`src/contexts/`)
-Gerencia o estado global compartilhado entre componentes:
-- `AuthContext.tsx` - Estado de autenticação e sessão
-- `UserContext.tsx` - Dados do usuário logado
-- `produtoContext.tsx` - Estado do catálogo de produtos
-- `carrinhoContext.tsx` - Estado do carrinho de compras
-- `enderecoContext.tsx` - Endereços do usuário
-- `pagamentoContext.tsx` - Estado de pagamentos
-
-#### 🔄 **Hooks** (`src/hooks/`)
-Encapsula lógica de negócio reutilizável:
-- `useAuth.ts` - Lógica de autenticação
-- `userProfile.ts` - Gestão de perfil do usuário
-- `hooksProdutos.ts` - Lógica de produtos
-- `hooksCarrinho.ts` - Lógica do carrinho
-- `userEndereco.ts` - Gestão de endereços
-- `hooksPagamento.ts` - Lógica de pagamento
-- `hooksHistorico.ts` - Histórico de pedidos
-- `useMercadoPago.ts` - Integração com Mercado Pago
-
-#### 🧩 **Components** (`src/components/`)
-Componentes de UI reutilizáveis:
-- `components_produto.tsx` - Cards e listagens de produtos
-- `EditarPerfilModal.tsx` - Modal de edição de perfil
-- `EditarEnderecoModal.tsx` - Modal de edição de endereço
-- `MercadoPagoButton.tsx` - Botão de pagamento Mercado Pago
-- `Confetti.tsx` - Animação de celebração
-- `style.styles.ts` - Estilos compartilhados
-
-#### 📱 **Screens** (`src/app/`)
-Telas da aplicação organizadas com Expo Router:
-- **Auth**: `entrar.tsx`, `cadastro.tsx`, `completar-perfil.tsx`
-- **Tabs**: `home.tsx`, `list_produtos.tsx`, `carrinho.tsx`, `perfil.tsx`, `historico.tsx`
-- **Checkout**: `endereco.tsx`, `pagamento.tsx`, `aguardando-pagamento.tsx`, `compra-sucesso.tsx`
-- **Details**: `produto/[id].tsx`, `pedido-detalhes/[id].tsx`
-
----
-
 ## 📁 Estrutura de Pastas
 
 ```
@@ -434,5 +382,6 @@ npx expo start --android
 ``
 
 ---
+
 
 
