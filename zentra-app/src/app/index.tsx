@@ -46,8 +46,17 @@ export default function LoginScreen() {
     };
 
     if (!fontsLoaded || loading) {
-      return null; // ou uma tela de carregamento
-      
+      return (
+        <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+          <Image
+            source={require('./../assets/images/logo_zentra.png')}
+            style={{ width: 150, height: 150, marginBottom: 20 }}
+          />
+          <Text style={[styles.texto, { textAlign: 'center' }]}>
+            {loading ? 'Verificando sessão...' : 'Carregando fontes...'}
+          </Text>
+        </View>
+      );
     }
     return (
       <View style={styles.container}>
@@ -63,22 +72,6 @@ export default function LoginScreen() {
           </TouchableOpacity>
           <TouchableOpacity style={styles.home_button}>
             <Text style={{ fontFamily: 'PoppinsSemiBold' }} onPress={() => router.push('/cadastro')}>Cadastre-se</Text>
-          </TouchableOpacity>
-          
-          {/* Botão de teste */}
-          <TouchableOpacity 
-            style={[styles.home_button, { backgroundColor: '#48C9B0', marginTop: 10 }]}
-            onPress={() => router.push('/(tabs)/home')}
-          >
-            <Text style={{ fontFamily: 'PoppinsSemiBold', color: 'white' }}>🧪 Testar Sistema</Text>
-          </TouchableOpacity>
-          
-          {/* Botão temporário para limpar sessão */}
-          <TouchableOpacity 
-            style={[styles.home_button, { backgroundColor: '#ff4444', marginTop: 10 }]}
-            onPress={handleClearSession}
-          >
-            <Text style={{ fontFamily: 'PoppinsSemiBold', color: 'white' }}>🧹 Limpar Sessão (Debug)</Text>
           </TouchableOpacity>
         </View>
 

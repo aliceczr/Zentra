@@ -105,9 +105,6 @@ export function CarrinhoProvider({ children }: CarrinhoProviderProps) {
       
       const novosItens = await carrinhoService.adicionarItem(produto, quantidade);
       await atualizarEstado(novosItens);
-      
-      // Feedback visual
-      console.log(`✅ ${produto.nome} adicionado ao carrinho`);
     } catch (error) {
       handleError(error, 'adicionar produto');
     } finally {
@@ -125,8 +122,6 @@ export function CarrinhoProvider({ children }: CarrinhoProviderProps) {
       
       const novosItens = await carrinhoService.removerItem(produtoId);
       await atualizarEstado(novosItens);
-      
-      console.log(`❌ Produto ${produtoId} removido do carrinho`);
     } catch (error) {
       handleError(error, 'remover produto');
     } finally {
@@ -144,8 +139,6 @@ export function CarrinhoProvider({ children }: CarrinhoProviderProps) {
       
       const novosItens = await carrinhoService.atualizarQuantidade(produtoId, quantidade);
       await atualizarEstado(novosItens);
-      
-      console.log(`🔄 Quantidade atualizada para produto ${produtoId}: ${quantidade}`);
     } catch (error) {
       handleError(error, 'atualizar quantidade');
     } finally {
@@ -168,8 +161,6 @@ export function CarrinhoProvider({ children }: CarrinhoProviderProps) {
         valorTotal: 0,
         quantidadeItens: 0,
       });
-      
-      console.log('🗑️ Carrinho limpo');
     } catch (error) {
       handleError(error, 'limpar carrinho');
     } finally {
@@ -187,8 +178,6 @@ export function CarrinhoProvider({ children }: CarrinhoProviderProps) {
       
       const itensCarregados = await carrinhoService.carregarCarrinho();
       await atualizarEstado(itensCarregados);
-      
-      console.log(`🔄 Carrinho recarregado: ${itensCarregados.length} itens`);
     } catch (error) {
       handleError(error, 'recarregar carrinho');
     } finally {
@@ -213,8 +202,6 @@ export function CarrinhoProvider({ children }: CarrinhoProviderProps) {
         
         await atualizarEstado(itensAtualizados);
       }
-      
-      console.log('✅ Carrinho validado');
     } catch (error) {
       handleError(error, 'validar carrinho');
     } finally {
