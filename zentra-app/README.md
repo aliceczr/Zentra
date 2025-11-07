@@ -229,44 +229,6 @@ npm test           # Executa testes
 - Emuladores podem funcionar, mas o teste em dispositivo real é recomendado
 - Funcionalidades como notificações funcionam melhor em dispositivos reais
 
----
-
-## 📂 Estrutura de Pastas
-
-```
-zentra-app/
-├── 📱 src/
-│   ├── 🏠 app/                    # Screens (Expo Router)
-│   │   ├── (tabs)/               # Navegação principal
-│   │   │   ├── home.tsx          # Tela inicial
-│   │   │   ├── list_produtos.tsx # Catálogo de produtos
-│   │   │   ├── carrinho.tsx      # Carrinho de compras
-│   │   │   ├── historico.tsx     # Histórico de pedidos
-│   │   │   ├── perfil.tsx        # Perfil do usuário
-│   │   │   └── pagamento.tsx     # Checkout
-│   │   ├── pedido-detalhes/      # Detalhes do pedido
-│   │   ├── produto/              # Detalhes do produto
-│   │   ├── cadastro.tsx          # Tela de cadastro
-│   │   ├── entrar.tsx           # Tela de login
-│   │   ├── endereco.tsx         # Gestão de endereços
-│   │   └── completar-perfil.tsx # Completar cadastro
-│   ├── 🧩 components/            # Componentes reutilizáveis
-│   ├── 🌐 contexts/              # Context API
-│   ├── 🔄 hooks/                 # Custom Hooks
-│   ├── 🎯 services/              # Serviços de API
-│   ├── ⚙️ config/                # Configurações
-│   └── 🎨 assets/                # Imagens e fontes
-├── 🔧 Configuration Files
-│   ├── package.json              # Dependências
-│   ├── app.json                  # Configuração do Expo
-│   ├── tsconfig.json            # TypeScript config
-│   └── supabase-client.ts       # Cliente Supabase
-└── 📋 Documentation
-    ├── README.md                # Este arquivo
-    └── .env.example            # Template de variáveis
-```
-
----
 
 ## ⚙️ Configuração do Ambiente
 
@@ -382,6 +344,7 @@ npx expo start --android
 ``
 
 ---
+
 
 
 
