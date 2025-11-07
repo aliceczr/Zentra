@@ -113,72 +113,6 @@ Antes de começar, certifique-se de ter instalado:
 2. Conecte o celular na **mesma rede Wi-Fi** que seu computador
 3. Mantenha o Expo Go aberto durante o desenvolvimento
 
----
-
-## 🚀 Instalação e Execução
-
-### 1️⃣ Clone o Repositório
-
-```bash
-git clone https://github.com/aliceczr/Zentra.git
-cd zentra-app
-```
-
-### 2️⃣ Instale as Dependências
-
-```bash
-npm install
-```
-
-### 3️⃣ Configure as Variáveis de Ambiente
-
-⚠️ **IMPORTANTE**: O projeto requer credenciais do Supabase para funcionar.
-
-Crie um arquivo `.env` na raiz do projeto com as seguintes variáveis:
-
-```env
-EXPO_PUBLIC_SUPABASE_URL=sua-url-do-supabase
-EXPO_PUBLIC_SUPABASE_ANON_KEY=sua-chave-anonima-do-supabase
-```
-
-> **Nota**: Entre em contato com o administrador do projeto para obter as credenciais necessárias.
-
-### 4️⃣ Inicie o Servidor de Desenvolvimento
-
-Escolha uma das opções abaixo dependendo da sua configuração de rede:
-
-#### Opção A: Modo Tunnel (Recomendado para redes com restrições)
-```bash
-npx expo start --tunnel
-```
-- ✅ Funciona em qualquer rede
-- ✅ Não requer mesma Wi-Fi
-- ⚠️ Pode ser um pouco mais lento
-
-#### Opção B: Modo LAN (Mais rápido, mesma rede)
-```bash
-npx expo start --lan
-```
-- ✅ Mais rápido
-- ⚠️ Requer que celular e computador estejam na mesma rede Wi-Fi
-
-#### Opção C: Modo padrão
-```bash
-npx expo start
-```
-
-### 5️⃣ Abra o App no Celular
-
-Após iniciar o servidor, você verá um **QR Code** no terminal:
-
-1. Abra o aplicativo **Expo Go** no seu celular
-2. **Android**: Toque em "Scan QR Code" e escaneie o código
-3. **iOS**: Abra a câmera nativa e escaneie o código (será direcionado para o Expo Go)
-
-O aplicativo será carregado automaticamente no seu dispositivo! 🎉
-
----
-
 ## 🔧 Configuração
 
 ## 🛠️ Tecnologias Utilizadas
@@ -344,6 +278,7 @@ npx expo start --android
 ``
 
 ---
+
 
 
 
