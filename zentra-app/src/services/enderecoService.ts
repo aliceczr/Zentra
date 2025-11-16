@@ -16,14 +16,16 @@ export interface EnderecoData {
 }
 
 export const enderecoService = {
-    async criaEndereco({ user_id, tipo, cep, logradouro, bairro, cidade, numero, complemento, estado, pais, referencia, principal }: EnderecoData) {
+    async _getAuthenticatedUserId() {
         const { data: { user } } = await supabase.auth.getUser();
-        
-        if (!user || user.id !== user_id) {
-            throw new Error('Usuário não autenticado ou dados inconsistentes');
+        if (!user) throw new Error('Usuário não autenticado');
+        return user.id;
+    },
+    async criaEndereco({ user_id, tipo, cep, logradouro, bairro, cidade, numero, complemento, estado, pais, referencia, principal }: EnderecoData) {
+        const authUserId = await this._getAuthenticatedUserId();
+        if (authUserId !== user_id) {
+            throw new Error('Dados de usuário inconsistentes');
         }
-
-        // Se é principal, remover principal dos outros endereços
         if (principal) {
             await supabase
                 .from('endereco_usuario')
@@ -52,16 +54,15 @@ export const enderecoService = {
             .select();
 
         if (error) {
-            throw new Error(error.message);
+            throw error;
         }
 
         return data;
     },
 
     async buscarEnderecosPorUsuario(userId: string) {
-        const { data: { user } } = await supabase.auth.getUser();
-        
-        if (!user || user.id !== userId) {
+        const authUserId = await this._getAuthenticatedUserId();
+        if (authUserId !== userId) {
             throw new Error('Usuário não autenticado');
         }
 
@@ -73,25 +74,21 @@ export const enderecoService = {
             .order('created_at', { ascending: false });
 
         if (error) {
-            throw new Error(error.message);
+            throw error;
         }
 
         return data || [];
     },
 
     async atualizarEndereco(enderecoId: string, dadosAtualizacao: Partial<EnderecoData>) {
-        const { data: { user } } = await supabase.auth.getUser();
-        
-        if (!user) {
-            throw new Error('Usuário não autenticado');
-        }
+        const authUserId = await this._getAuthenticatedUserId();
 
         // Se está definindo como principal, remover principal dos outros
         if (dadosAtualizacao.principal === true) {
             await supabase
                 .from('endereco_usuario')
                 .update({ principal: false })
-                .eq('user_id', user.id);
+                .eq('user_id', authUserId);
         }
 
         const { data, error } = await supabase
@@ -101,44 +98,38 @@ export const enderecoService = {
                 updated_at: new Date().toISOString()
             })
             .eq('id', enderecoId)
-            .eq('user_id', user.id)
+            .eq('user_id', authUserId)
             .select();
 
         if (error) {
-            throw new Error(error.message);
+            throw error;
         }
 
         return data;
     },
 
     async removerEndereco(enderecoId: string) {
-        const { data: { user } } = await supabase.auth.getUser();
-        
-        if (!user) {
-            throw new Error('Usuário não autenticado');
-        }
+        const authUserId = await this._getAuthenticatedUserId();
 
         const { error } = await supabase
             .from('endereco_usuario')
             .delete()
             .eq('id', enderecoId)
-            .eq('user_id', user.id);
+            .eq('user_id', authUserId);
 
         if (error) {
-            throw new Error(error.message);
+            throw error;
         }
 
         return { success: true };
     },
 
     async definirEnderecoPrincipal(userId: string, enderecoId: string) {
-        const { data: { user } } = await supabase.auth.getUser();
-        
-        if (!user || user.id !== userId) {
+        const authUserId = await this._getAuthenticatedUserId();
+        if (authUserId !== userId) {
             throw new Error('Usuário não autenticado');
         }
-
-        // Remover principal de todos os endereços
+        // Remover principal de todos os endereços do usuário
         await supabase
             .from('endereco_usuario')
             .update({ principal: false })
@@ -156,16 +147,15 @@ export const enderecoService = {
             .select();
 
         if (error) {
-            throw new Error(error.message);
+            throw error;
         }
 
         return data;
     },
 
     async buscarEnderecoPrincipal(userId: string) {
-        const { data: { user } } = await supabase.auth.getUser();
-        
-        if (!user || user.id !== userId) {
+        const authUserId = await this._getAuthenticatedUserId();
+        if (authUserId !== userId) {
             throw new Error('Usuário não autenticado');
         }
         
@@ -176,8 +166,8 @@ export const enderecoService = {
             .eq('principal', true)
             .single();
         
-        if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
-            throw new Error(error.message);
+        if (error && error.code !== 'PGRST116') { 
+            throw error;
         }
         
         return data || null;
@@ -208,6 +198,8 @@ export const enderecoService = {
                 pais: 'Brasil'
             };
         } catch (error) {
+            // preserva e relança o erro original quando possível
+            if (error instanceof Error) throw error;
             throw new Error('Erro ao buscar CEP');
         }
     }

@@ -17,12 +17,10 @@ export const useAuthForm = () => {
     setError(null);
 
     try {
-      console.log('📞 Chamando authContext.signUp...');
       const result = await signUp(email, password);
-      console.log('✅ authContext.signUp concluído:', result);
-      return result; // Retorna o resultado completo
+      return result;
     } catch (err) {
-      console.error('❌ Erro no signUp:', err);
+      console.error('Erro no signUp:', err);
       setError(err instanceof Error ? err.message : 'Erro ao cadastrar');
       return false;
     } finally {
@@ -30,7 +28,6 @@ export const useAuthForm = () => {
     }
   };
 
-  // Nova função para cadastro com perfil completo
   const handleSignUpWithProfile = async (
     email: string, 
     password: string, 
@@ -42,11 +39,10 @@ export const useAuthForm = () => {
       dataNascimento: string;
     }
   ) => {
-    console.log('🔐 useAuthForm.handleSignUpWithProfile chamado');
     
     if (password !== confirmPassword) {
       setError('As senhas não coincidem!');
-      console.error('❌ Senhas não coincidem');
+      console.error('Senhas não coincidem');
       return false;
     }
 
@@ -54,15 +50,10 @@ export const useAuthForm = () => {
     setError(null);
 
     try {
-      console.log('📞 Fase 1: Criando conta no Supabase Auth...');
       const authResult = await signUp(email, password);
-      
       if (!authResult) {
         throw new Error('Erro ao criar conta de autenticação');
       }
-
-      console.log('📞 Fase 2: Criando perfil do usuário...');
-      console.log('🔍 AuthResult recebido:', authResult);
       
       // Corrigir acesso ao user - o Supabase retorna { user, session }
       const user = authResult.user;
@@ -80,11 +71,11 @@ export const useAuthForm = () => {
         dataNascimento: profileData.dataNascimento
       });
 
-      console.log('✅ Cadastro completo realizado com sucesso!');
+      
       return true;
       
     } catch (err) {
-      console.error('❌ Erro no cadastro completo:', err);
+      console.error('Erro no cadastro completo:', err);
       setError(err instanceof Error ? err.message : 'Erro ao cadastrar');
       return false;
     } finally {

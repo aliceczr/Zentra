@@ -22,23 +22,17 @@ export default function LoginScreen() {
 
     // Se usuário já estiver logado, redireciona para home (exceto durante cadastro)
     useEffect(() => {
-      console.log('🏠 Index - Estado do auth:', { user: user?.id, loading, isRegistering });
-      
       if (!loading && user && !isRegistering) {
-        console.log('👤 Usuário logado detectado, redirecionando...');
         router.replace('/(tabs)/home');
       }
     }, [user, loading, isRegistering]);
 
     // Função para limpar sessão (para debug)
     const handleClearSession = async () => {
-      console.log('🧹 Limpando sessão...');
       try {
         const { error } = await supabase.auth.signOut();
         if (error) {
           console.error('Erro ao fazer logout:', error);
-        } else {
-          console.log('✅ Sessão limpa!');
         }
       } catch (error) {
         console.error('Erro ao limpar sessão:', error);

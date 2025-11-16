@@ -3,13 +3,13 @@ import { Produto, FiltrosProduto, FiltroOpcao, buscarFabricantes, buscarMarcas, 
 import { buscarProdutos, buscarPorId } from '../services/produtoService';
 import { useProdutoContext } from '../contexts/produtoContext';
 
-// Hook básico para buscar produtos
+
 export function useProdutos(filtrosIniciais?: FiltrosProduto) {
   const [produtos, setProdutos] = useState<Produto[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Função para carregar produtos
+ 
   const carregarProdutos = async (filtros?: FiltrosProduto) => {
     try {
       setLoading(true);
@@ -26,7 +26,6 @@ export function useProdutos(filtrosIniciais?: FiltrosProduto) {
     }
   };
 
-  // Carregar produtos quando o hook é inicializado
   useEffect(() => {
     carregarProdutos();
   }, []);
@@ -40,13 +39,12 @@ export function useProdutos(filtrosIniciais?: FiltrosProduto) {
   };
 }
 
-// Hook para buscar um produto específico por ID
 export function useProduto(id: number | null) {
   const [produto, setProduto] = useState<Produto | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Função para carregar produto por ID
+
   const carregarProduto = async (produtoId: number) => {
     try {
       setLoading(true);
@@ -63,7 +61,7 @@ export function useProduto(id: number | null) {
     }
   };
 
-  // Carregar produto quando ID muda
+
   useEffect(() => {
     if (id !== null) {
       carregarProduto(id);
@@ -81,14 +79,13 @@ export function useProduto(id: number | null) {
   };
 }
 
-// Hook avançado para busca com filtros dinâmicos
+
 export function useBuscaProdutos() {
   const [produtos, setProdutos] = useState<Produto[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [filtros, setFiltros] = useState<FiltrosProduto>({});
 
-  // Função para buscar com filtros
   const buscar = async (novosFiltros: FiltrosProduto) => {
     try {
       setLoading(true);
@@ -106,22 +103,20 @@ export function useBuscaProdutos() {
     }
   };
 
-  // Função para buscar por texto
   const buscarPorTexto = async (texto: string) => {
     await buscar({ ...filtros, busca: texto });
   };
 
-  // Função para filtrar por categoria
+ 
   const filtrarPorCategoria = async (categoriaId: number) => {
     await buscar({ ...filtros, categoria_id: categoriaId });
   };
 
-  // Função para produtos em destaque
+
   const buscarDestaques = async () => {
     await buscar({ ...filtros, destaque: true });
   };
 
-  // Função para limpar filtros
   const limparFiltros = async () => {
     await buscar({});
   };
@@ -139,7 +134,7 @@ export function useBuscaProdutos() {
   };
 }
 
-// Interface para item do carrinho
+
 interface ItemCarrinho {
   produto: Produto;
   quantidade: number;
@@ -147,33 +142,33 @@ interface ItemCarrinho {
   precoTotal: number;
 }
 
-// Hook para gerenciar carrinho de compras
+
 export function useCarrinho() {
   const [itens, setItens] = useState<ItemCarrinho[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
 
-  // Calcular total do carrinho
+
   const calcularTotal = (): number => {
     return itens.reduce((total, item) => total + item.precoTotal, 0);
   };
 
-  // Calcular quantidade total de itens
+  
   const calcularQuantidadeTotal = (): number => {
     return itens.reduce((total, item) => total + item.quantidade, 0);
   };
 
-  // Verificar se produto está no carrinho
+ 
   const temNoCarrinho = (produtoId: number): boolean => {
     return itens.some(item => item.produto.id === produtoId);
   };
 
-  // Obter quantidade de um produto específico
+  
   const obterQuantidade = (produtoId: number): number => {
     const item = itens.find(item => item.produto.id === produtoId);
     return item ? item.quantidade : 0;
   };
 
-  // Adicionar produto ao carrinho
+ 
   const adicionarItem = async (produto: Produto, quantidade: number = 1) => {
     try {
       setLoading(true);
@@ -181,10 +176,10 @@ export function useCarrinho() {
       const itemExistente = itens.find(item => item.produto.id === produto.id);
       
       if (itemExistente) {
-        // Atualizar quantidade se já existe
+        
         await atualizarQuantidade(produto.id!, itemExistente.quantidade + quantidade);
       } else {
-        // Adicionar novo item
+        
         const novoItem: ItemCarrinho = {
           produto,
           quantidade,
@@ -201,7 +196,7 @@ export function useCarrinho() {
     }
   };
 
-  // Atualizar quantidade de um item
+  
   const atualizarQuantidade = async (produtoId: number, novaQuantidade: number) => {
     try {
       setLoading(true);
@@ -228,7 +223,7 @@ export function useCarrinho() {
     }
   };
 
-  // Remover item do carrinho
+ 
   const removerItem = async (produtoId: number) => {
     try {
       setLoading(true);
@@ -241,7 +236,7 @@ export function useCarrinho() {
     }
   };
 
-  // Limpar carrinho
+
   const limparCarrinho = () => {
     setItens([]);
   };
@@ -270,7 +265,6 @@ export function useProdutosList() {
     carregarProdutos
   } = useProdutoContext();
   
-  // Alias para manter compatibilidade com interface anterior
   const buscar = carregarProdutos;
   
   return {
@@ -279,7 +273,7 @@ export function useProdutosList() {
     error,
     filtros,
     buscar,
-    // Funções extras compatíveis
+
     buscarPorTexto: async (texto: string) => {
       await carregarProdutos({ ...filtros, busca: texto });
     },
@@ -295,9 +289,7 @@ export function useProdutosList() {
   };
 }
 
-/**
- * Hook especializado para filtros de produtos
- */
+
 export function useProdutoFiltros() {
   const { 
     filtros, 
@@ -314,9 +306,7 @@ export function useProdutoFiltros() {
   };
 }
 
-/**
- * Hook especializado para detalhes de produto
- */
+
 export function useProdutoDetalhes() {
   const { 
     produtoSelecionado, 
@@ -331,14 +321,7 @@ export function useProdutoDetalhes() {
   };
 }
 
-// =============================================================================
-// 🏭 HOOK PARA FILTROS DINÂMICOS
-// =============================================================================
 
-/**
- * Hook para carregar filtros dinâmicos do banco de dados
- * Busca fabricantes, marcas e categorias disponíveis
- */
 export function useFiltrosDinamicos() {
   const [fabricantes, setFabricantes] = useState<FiltroOpcao[]>([]);
   const [marcas, setMarcas] = useState<FiltroOpcao[]>([]);
@@ -346,7 +329,7 @@ export function useFiltrosDinamicos() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Carregar todos os filtros
+
   const carregarFiltros = async () => {
     try {
       setLoading(true);
@@ -371,27 +354,26 @@ export function useFiltrosDinamicos() {
     }
   };
 
-  // Recarregar apenas fabricantes (útil quando produtos são atualizados)
   const recarregarFabricantes = async () => {
     try {
       const fabricantesData = await buscarFabricantes();
       setFabricantes(fabricantesData);
     } catch (err) {
-      console.error('❌ HOOK: Erro ao recarregar fabricantes:', err);
+      console.error('HOOK: Erro ao recarregar fabricantes:', err);
     }
   };
 
-  // Recarregar apenas marcas
+
   const recarregarMarcas = async () => {
     try {
       const marcasData = await buscarMarcas();
       setMarcas(marcasData);
     } catch (err) {
-      console.error('❌ HOOK: Erro ao recarregar marcas:', err);
+      console.error('HOOK: Erro ao recarregar marcas:', err);
     }
   };
 
-  // Carregar filtros na inicialização
+
   useEffect(() => {
     carregarFiltros();
   }, []);
@@ -404,12 +386,11 @@ export function useFiltrosDinamicos() {
     loading,
     error,
     
-    // Ações
+    
     carregarFiltros,
     recarregarFabricantes,
     recarregarMarcas,
-    
-    // Status
+   
     temFabricantes: fabricantes.length > 1,
     temMarcas: marcas.length > 1,
     temCategorias: categorias.length > 1,

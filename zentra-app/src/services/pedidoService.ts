@@ -1,16 +1,14 @@
 import { supabase } from '../../supabase-client';
 import { Produto } from './produtoService';
+import { criarPagamento as criarPagamentoService } from './pagamentoService';
 
-// ============================================================================
-// 🛒 TYPES E INTERFACES - PEDIDOS E PAGAMENTOS
-// ============================================================================
+
 
 export type MetodoPagamento = 'CARTAO_CREDITO' | 'CARTAO_DEBITO' | 'PIX' | 'BOLETO' | 'DINHEIRO';
 export type StatusPagamento = 'PENDENTE' | 'PROCESSANDO' | 'APROVADO' | 'RECUSADO' | 'CANCELADO' | 'ESTORNADO';
 export type StatusPedido = 'CRIADO' | 'PAGO' | 'PREPARANDO' | 'ENVIADO' | 'ENTREGUE' | 'CANCELADO';
 export type TipoMetodo = 'CARTAO_CREDITO' | 'CARTAO_DEBITO' | 'PIX';
 
-// INTERFACES DE PEDIDO
 export interface ItemPedido {
   id: number;
   pedido_id: number;
@@ -24,18 +22,34 @@ export interface ItemPedido {
 }
 
 export interface Pedido {
-  id: number; // SERIAL PRIMARY KEY no Supabase
-  usuario_id: string; // UUID do auth.users no Supabase
-  endereco_id: string; // UUID do endereco_usuario no Supabase
-  endereco?: any; // Será tipado com interface de endereço
+  id: number; 
+  usuario_id: string; 
+  endereco_id: string; 
+  endereco?: {
+    id: string;
+    user_id: string;
+    tipo: string;
+    cep: string;
+    logradouro: string;
+    numero: string;
+    complemento?: string | null;
+    bairro: string;
+    cidade: string;
+    estado: string;
+    pais: string;
+    referencia?: string | null;
+    principal: boolean;
+    created_at?: string;
+    updated_at?: string;
+  };
   status: StatusPedido;
   subtotal: number;
   taxa_entrega: number;
   desconto: number;
   total: number;
   observacoes?: string;
-  tempo_estimado_entrega?: number; // em minutos
-  codigo_pedido: string; // ZEN-001, ZEN-002, etc.
+  tempo_estimado_entrega?: number; 
+  codigo_pedido: string; 
   itens: ItemPedido[];
   pagamentos: Pagamento[];
   created_at: string;
@@ -44,35 +58,24 @@ export interface Pedido {
   data_entrega_real?: string;
 }
 
-// INTERFACES DE PAGAMENTO (mantidas do arquivo original)
+
 export interface Pagamento {
-  id: number;
+  id: string | number;
   pedido_id: number;
-  metodo_pagamento: MetodoPagamento;
-  status_pagamento: StatusPagamento;
-  valor_pago: number;
-  parcelas: number;
-  valor_parcela?: number;
-  taxa_juros: number;
-  codigo_transacao?: string;
-  gateway_pagamento?: string;
-  dados_pagamento?: any;
-  data_pagamento?: string;
-  data_confirmacao?: string;
+  preference_id?: string | null;
+  payment_id?: string | null;
+  status: string;
+  status_detail?: string | null;
+  valor_pago?: number | null;
+  data_aprovacao?: string | null;
   created_at: string;
-  updated_at: string;
-  // Campos Stripe (quando implementado)
-  stripe_payment_intent_id?: string;
-  stripe_charge_id?: string;
-  stripe_customer_id?: string;
-  webhook_event_id?: string;
 }
 
 export interface MetodoPagamentoUsuario {
   id: number;
-  usuario_id: string; // UUID string do auth.users
+  usuario_id: string; 
   tipo: TipoMetodo;
-  nome?: string; // Adicionar campo nome
+  nome?: string;
   bandeira?: string;
   ultimos_digitos?: string;
   nome_titular?: string;
@@ -83,15 +86,15 @@ export interface MetodoPagamentoUsuario {
   dados_criptografados?: string;
   created_at: string;
   updated_at?: string;
-  // Campos Stripe (quando implementado)
+
   stripe_payment_method_id?: string;
   stripe_customer_id?: string;
 }
 
-// INTERFACES PARA CRIAÇÃO E ATUALIZAÇÃO
+
 export interface CriarPedido {
-  usuario_id: string; // UUID string do Supabase auth
-  endereco_id: string; // UUID string do endereco_usuario
+  usuario_id: string; 
+  endereco_id: string;
   itens: {
     produto_id: number;
     quantidade: number;
@@ -108,19 +111,17 @@ export interface CriarPedido {
 
 export interface CriarPagamento {
   pedido_id: number;
-  metodo_pagamento: MetodoPagamento;
-  valor_pago: number;
-  parcelas: number;
-  taxa_juros?: number;
-  dados_pagamento?: any;
-  // Campos Stripe (quando implementado)
-  stripe_payment_intent_id?: string;
-  stripe_customer_id?: string;
+  preference_id?: string | null;
+  payment_id?: string | null;
+  status?: string;
+  status_detail?: string | null;
+  valor_pago?: number | null;
+  data_aprovacao?: string | null;
 }
 
 export interface AtualizarPedido {
   status?: StatusPedido;
-  endereco_id?: string; // UUID string
+  endereco_id?: string; 
   observacoes?: string;
   tempo_estimado_entrega?: number;
   data_entrega_estimada?: string;
@@ -128,26 +129,25 @@ export interface AtualizarPedido {
 }
 
 export interface AtualizarPagamento {
-  status_pagamento?: StatusPagamento;
-  codigo_transacao?: string;
-  data_confirmacao?: string;
-  dados_pagamento?: any;
-  webhook_event_id?: string;
+  status?: StatusPagamento;
+  status_detail?: string | null;
+  data_aprovacao?: string;
+  valor_pago?: number | null;
 }
 
-// INTERFACES PARA FILTROS
+
 export interface FiltrosPedidos {
-  usuario_id?: string; // UUID string
+  usuario_id?: string; 
   status?: StatusPedido;
   data_inicio?: string;
   data_fim?: string;
   codigo_pedido?: string;
-  endereco_id?: string; // UUID string
+  endereco_id?: string; 
 }
 
 export interface FiltrosPagamentos {
   pedido_id?: number;
-  usuario_id?: string; // UUID string
+  usuario_id?: string; 
   metodo_pagamento?: MetodoPagamento;
   status_pagamento?: StatusPagamento;
   data_inicio?: string;
@@ -155,17 +155,12 @@ export interface FiltrosPagamentos {
   codigo_transacao?: string;
 }
 
-// ================================
-// IMPLEMENTAÇÃO SUPABASE (PRODUÇÃO)
-// ================================
 
 class SupabasePedidoService {
   
   async criarPedido(dados: CriarPedido): Promise<Pedido> {
-    console.log('🔍 SupabasePedidoService.criarPedido chamado com:', dados);
-    
     try {
-      // 1. Primeiro, criar o pedido
+      
       const pedidoData = {
         usuario_id: dados.usuario_id,
         endereco_id: dados.endereco_id,
@@ -176,7 +171,7 @@ class SupabasePedidoService {
         total: dados.total,
         observacoes: dados.observacoes,
         tempo_estimado_entrega: dados.tempo_estimado_entrega || 30,
-        codigo_pedido: `ZEN-${Date.now()}`, // Gerar código único
+        codigo_pedido: `ZEN-${Date.now()}`, 
       };
 
       const { data: pedido, error: pedidoError } = await supabase
@@ -186,15 +181,14 @@ class SupabasePedidoService {
         .single();
 
       if (pedidoError) {
-        console.error('❌ Erro ao criar pedido:', pedidoError);
-        throw new Error('Erro ao criar pedido: ' + pedidoError.message);
+        console.error('Erro ao criar pedido:', pedidoError);
+        throw pedidoError;
       }
 
-      console.log('✅ Pedido criado:', pedido);
+      
 
-      // 2. Criar itens do pedido
       const itensData = await Promise.all(dados.itens.map(async (item) => {
-        // Buscar dados do produto para snapshot
+        
         const { data: produto } = await supabase
           .from('produtos')
           .select('nome, imagem_principal, marca, fabricante')
@@ -210,7 +204,7 @@ class SupabasePedidoService {
           produto_fabricante: produto?.fabricante || null,
           quantidade: item.quantidade,
           preco_unitario: item.preco_unitario,
-          // preco_total removido - é calculado automaticamente no banco
+   
           observacoes: item.observacoes,
         };
       }));
@@ -221,13 +215,12 @@ class SupabasePedidoService {
         .select('*');
 
       if (itensError) {
-        console.error('❌ Erro ao criar itens do pedido:', itensError);
-        throw new Error('Erro ao criar itens do pedido: ' + itensError.message);
+        console.error('Erro ao criar itens do pedido:', itensError);
+        throw itensError;
       }
 
-      console.log('✅ Itens do pedido criados:', itens);
+      
 
-      // 3. Retornar o pedido completo
       return {
         ...pedido,
         itens: itens || [],
@@ -235,14 +228,12 @@ class SupabasePedidoService {
       };
 
     } catch (error) {
-      console.error('❌ Erro no SupabasePedidoService.criarPedido:', error);
+      console.error('Erro no SupabasePedidoService.criarPedido:', error);
       throw error;
     }
   }
 
   async buscarPedidoPorId(id: number): Promise<Pedido | null> {
-    console.log('🔍 SupabasePedidoService.buscarPedidoPorId chamado com:', id);
-    
     try {
       const { data, error } = await supabase
         .from('pedidos')
@@ -255,20 +246,27 @@ class SupabasePedidoService {
         .single();
 
       if (error) {
-        console.error('❌ Erro ao buscar pedido:', error);
+        console.error('Erro ao buscar pedido:', error);
         return null;
       }
 
-      return data;
+      // Normalizar pagamentos dentro do pedido para compatibilidade
+      if (data && data.pagamentos && Array.isArray(data.pagamentos)) {
+        data.pagamentos = data.pagamentos.map((p: any) => ({
+          ...p,
+          status_pagamento: p.status,
+          metodo_pagamento: p.status_detail,
+        }));
+      }
+
+    return data;
     } catch (error) {
-      console.error('❌ Erro no SupabasePedidoService.buscarPedidoPorId:', error);
+      console.error('Erro no SupabasePedidoService.buscarPedidoPorId:', error);
       return null;
     }
   }
 
   async buscarPedidos(filtros: FiltrosPedidos = {}): Promise<Pedido[]> {
-    console.log('🔍 SupabasePedidoService.buscarPedidos chamado com filtros:', filtros);
-    
     try {
       let query = supabase
         .from('pedidos')
@@ -278,9 +276,7 @@ class SupabasePedidoService {
           pagamentos:pagamentos(*)
         `);
 
-      // Aplicar filtros
       if (filtros.usuario_id) {
-        console.log('🔍 Filtrando por usuario_id:', filtros.usuario_id);
         query = query.eq('usuario_id', filtros.usuario_id);
       }
       
@@ -288,30 +284,22 @@ class SupabasePedidoService {
         query = query.eq('status', filtros.status);
       }
 
-      // Ordenar por data de criação (mais recente primeiro)
+    
       query = query.order('created_at', { ascending: false });
 
-      console.log('📞 Executando query no Supabase...');
       const { data, error } = await query;
-
       if (error) {
-        console.error('❌ Erro ao buscar pedidos:', error);
-        throw new Error('Erro ao buscar pedidos: ' + error.message);
+        console.error('Erro ao buscar pedidos:', error);
+        throw error;
       }
-
-      console.log('📊 Dados retornados do Supabase:', data);
-      console.log('📈 Quantidade de pedidos encontrados:', data?.length || 0);
-
       return data || [];
     } catch (error) {
-      console.error('❌ Erro no SupabasePedidoService.buscarPedidos:', error);
+      console.error('Erro no SupabasePedidoService.buscarPedidos:', error);
       throw error;
     }
   }
 
   async atualizarPedido(id: number, dados: AtualizarPedido): Promise<Pedido> {
-    console.log('🔍 SupabasePedidoService.atualizarPedido chamado:', { id, dados });
-    
     try {
       const { data, error } = await supabase
         .from('pedidos')
@@ -321,150 +309,72 @@ class SupabasePedidoService {
         .single();
 
       if (error) {
-        console.error('❌ Erro ao atualizar pedido:', error);
-        throw new Error('Erro ao atualizar pedido: ' + error.message);
+        console.error('Erro ao atualizar pedido:', error);
+        throw error;
       }
-
       return data;
     } catch (error) {
-      console.error('❌ Erro no SupabasePedidoService.atualizarPedido:', error);
+      console.error('Erro no SupabasePedidoService.atualizarPedido:', error);
       throw error;
     }
   }
 
   async criarPagamento(dados: CriarPagamento): Promise<Pagamento> {
-    console.log('🔍 SupabasePedidoService.criarPagamento chamado com:', dados);
-    
-    try {
-      const pagamentoData = {
-        pedido_id: dados.pedido_id,
-        metodo_pagamento: dados.metodo_pagamento,
-        valor_pago: dados.valor_pago, // Nome correto do campo
-        parcelas: dados.parcelas,
-        status_pagamento: 'PENDENTE' as StatusPagamento, // Nome correto do campo
-        codigo_transacao: `TXN-${Date.now()}`, // Nome correto do campo
-        gateway_pagamento: 'SIMULACAO', // Sistema de simulação para demonstração
-        dados_pagamento: dados.dados_pagamento,
-        data_pagamento: new Date().toISOString(),
-        taxa_juros: dados.taxa_juros || 0,
-      };
-
-      const { data, error } = await supabase
-        .from('pagamentos')
-        .insert([pagamentoData])
-        .select('*')
-        .single();
-
-      if (error) {
-        console.error('❌ Erro ao criar pagamento:', error);
-        throw new Error('Erro ao criar pagamento: ' + error.message);
-      }
-
-      console.log('✅ Pagamento criado:', data);
-
-      // Simular sequência de processamento (para MVP)
-      // Etapa 1: CRIADO (Processando) - já criado
-      
-      // Etapa 2: Após 3 segundos -> PAGO (Pagamento Aprovado)
-      setTimeout(async () => {
-        try {
-          await this.atualizarPagamento(data.id, { 
-            status_pagamento: 'APROVADO'
-          });
-          
-          await this.atualizarPedido(dados.pedido_id, {
-            status: 'PAGO' as StatusPedido
-          });
-          
-          console.log('✅ Etapa 2: Pagamento aprovado');
-          
-          // Etapa 3: Após mais 3 segundos -> ENTREGUE (Finalizado)
-          setTimeout(async () => {
-            try {
-              await this.atualizarPedido(dados.pedido_id, {
-                status: 'ENTREGUE' as StatusPedido
-              });
-              console.log('✅ Etapa 3: Pedido finalizado');
-            } catch (err) {
-              console.error('❌ Erro na etapa 3:', err);
-            }
-          }, 3000);
-          
-        } catch (err) {
-          console.error('❌ Erro na etapa 2:', err);
-        }
-      }, 3000);
-
-      return data;
-    } catch (error) {
-      console.error('❌ Erro no SupabasePedidoService.criarPagamento:', error);
-      throw error;
-    }
+    // Delegate to centralized pagamentoService implementation to avoid duplication.
+    return await criarPagamentoService(dados as any);
   }
 
   async buscarPagamentoPorId(id: number): Promise<Pagamento | null> {
-    console.log('🔍 SupabasePedidoService.buscarPagamentoPorId chamado com:', id);
-    
     try {
       const { data, error } = await supabase
         .from('pagamentos')
         .select('*')
         .eq('id', id)
         .single();
-
       if (error) {
-        console.error('❌ Erro ao buscar pagamento:', error);
+        console.error('Erro ao buscar pagamento:', error);
         return null;
       }
-
-      return data;
+      const normalizedPayment = {
+        ...data,
+        status_pagamento: (data as any)?.status,
+        metodo_pagamento: (data as any)?.status_detail,
+      };
+      return normalizedPayment as unknown as Pagamento;
     } catch (error) {
-      console.error('❌ Erro no SupabasePedidoService.buscarPagamentoPorId:', error);
+      console.error('Erro no SupabasePedidoService.buscarPagamentoPorId:', error);
       return null;
     }
   }
 
   async buscarPagamentos(filtros: FiltrosPagamentos = {}): Promise<Pagamento[]> {
-    console.log('🔍 SupabasePedidoService.buscarPagamentos chamado com filtros:', filtros);
-    
     try {
       let query = supabase
         .from('pagamentos')
         .select('*');
-
-      // Aplicar filtros
       if (filtros.pedido_id) {
         query = query.eq('pedido_id', filtros.pedido_id);
       }
-      
-      if (filtros.status_pagamento) { // Corrigir nome do campo
+      if (filtros.status_pagamento) {
         query = query.eq('status', filtros.status_pagamento);
       }
-
       if (filtros.metodo_pagamento) {
         query = query.eq('metodo_pagamento', filtros.metodo_pagamento);
       }
-
-      // Ordenar por data de criação
       query = query.order('created_at', { ascending: false });
-
       const { data, error } = await query;
-
       if (error) {
-        console.error('❌ Erro ao buscar pagamentos:', error);
-        throw new Error('Erro ao buscar pagamentos: ' + error.message);
+        console.error('Erro ao buscar pagamentos:', error);
+        throw error;
       }
-
       return data || [];
     } catch (error) {
-      console.error('❌ Erro no SupabasePedidoService.buscarPagamentos:', error);
+      console.error('Erro no SupabasePedidoService.buscarPagamentos:', error);
       throw error;
     }
   }
 
   async atualizarPagamento(id: number, dados: AtualizarPagamento): Promise<Pagamento> {
-    console.log('🔍 SupabasePedidoService.atualizarPagamento chamado:', { id, dados });
-    
     try {
       const { data, error } = await supabase
         .from('pagamentos')
@@ -472,24 +382,18 @@ class SupabasePedidoService {
         .eq('id', id)
         .select('*')
         .single();
-
       if (error) {
-        console.error('❌ Erro ao atualizar pagamento:', error);
-        throw new Error('Erro ao atualizar pagamento: ' + error.message);
+        console.error('Erro ao atualizar pagamento:', error);
+        throw error;
       }
-
       return data;
     } catch (error) {
-      console.error('❌ Erro no SupabasePedidoService.atualizarPagamento:', error);
+      console.error('Erro no SupabasePedidoService.atualizarPagamento:', error);
       throw error;
     }
   }
 
   async buscarMetodosUsuario(usuarioId: string): Promise<MetodoPagamentoUsuario[]> {
-    console.log('🔍 SupabasePedidoService.buscarMetodosUsuario chamado com:', usuarioId);
-    
-    // Para MVP, retornar métodos mock
-    // Em produção, seria integrado com gateway de pagamento
     return [
       {
         id: 1,
@@ -526,7 +430,7 @@ export async function atualizarPedido(id: number, dados: AtualizarPedido): Promi
   return await supabasePedidoService.atualizarPedido(id, dados);
 }
 
-// PAGAMENTOS
+
 export async function criarPagamento(dados: CriarPagamento): Promise<Pagamento> {
   return await supabasePedidoService.criarPagamento(dados);
 }
@@ -543,7 +447,7 @@ export async function atualizarPagamento(id: number, dados: AtualizarPagamento):
   return await supabasePedidoService.atualizarPagamento(id, dados);
 }
 
-// MÉTODOS DE PAGAMENTO
+
 export async function buscarMetodosUsuario(usuarioId: string): Promise<MetodoPagamentoUsuario[]> {
   return await supabasePedidoService.buscarMetodosUsuario(usuarioId);
 }

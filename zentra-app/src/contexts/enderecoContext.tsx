@@ -25,28 +25,24 @@ export interface Endereco {
 }
 
 export interface EnderecoContextType {
-  // Estado
+  
   enderecos: Endereco[];
   enderecoPrincipal: Endereco | null;
   loading: boolean;
   error: string | null;
   
-  // Ações
   criarEndereco: (endereco: Omit<EnderecoData, 'user_id'>) => Promise<boolean>;
   buscarEnderecos: () => Promise<void>;
   atualizarEndereco: (id: string, dados: Partial<EnderecoData>) => Promise<boolean>;
   removerEndereco: (id: string) => Promise<boolean>;
   definirEnderecoPrincipal: (id: string) => Promise<boolean>;
   
-  // Utilitários
+
   limparErro: () => void;
   recarregarEnderecos: () => Promise<void>;
   validarEndereco: (endereco: Partial<EnderecoData>) => { valido: boolean; erros: string[] };
 }
 
-// ============================================================================
-// 🏗️ CONTEXT CREATION
-// ============================================================================
 
 const EnderecoContext = createContext<EnderecoContextType | undefined>(undefined);
 
@@ -58,9 +54,7 @@ export function useEnderecoContext(): EnderecoContextType {
   return context;
 }
 
-// ============================================================================
-// 🔧 PROVIDER COMPONENT
-// ============================================================================
+
 
 interface EnderecoProviderProps {
   children: ReactNode;
@@ -72,12 +66,10 @@ export function EnderecoProvider({ children }: EnderecoProviderProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Endereço principal (computed)
+
   const enderecoPrincipal = enderecos.find(endereco => endereco.principal) || null;
 
-  // ============================================================================
-  // 🔄 EFEITOS
-  // ============================================================================
+
 
   useEffect(() => {
     if (user?.id) {
@@ -87,9 +79,7 @@ export function EnderecoProvider({ children }: EnderecoProviderProps) {
     }
   }, [user?.id]);
 
-  // ============================================================================
-  // 📝 AÇÕES PRINCIPAIS
-  // ============================================================================
+
 
   const criarEndereco = async (dadosEndereco: Omit<EnderecoData, 'user_id'>): Promise<boolean> => {
     if (!user?.id) {
@@ -106,37 +96,42 @@ export function EnderecoProvider({ children }: EnderecoProviderProps) {
     setLoading(true);
     setError(null);
 
+    // Suporte a atualização otimista: se o novo endereço for marcado como principal,
+    // atualizamos localmente a flag dos endereços existentes e salvamos o estado anterior
+    // para possível rollback em caso de falha.
+    let snapshotEnderecos: Endereco[] | null = null;
+    const deveMarcarPrincipal = enderecos.length === 0 || !!dadosEndereco.principal;
+
     try {
+      if (deveMarcarPrincipal && enderecos.length > 0) {
+        snapshotEnderecos = enderecos.slice();
+        const otimista = enderecos.map(e => ({ ...e, principal: false }));
+        setEnderecos(otimista);
+      }
+
       const enderecoCompleto: EnderecoData = {
         ...dadosEndereco,
         user_id: user.id,
+        principal: deveMarcarPrincipal,
       };
-
-      // Se é o primeiro endereço ou foi marcado como principal
-      if (enderecos.length === 0 || dadosEndereco.principal) {
-        // Remover principal de outros endereços se necessário
-        if (dadosEndereco.principal && enderecos.length > 0) {
-          const enderecosAtualizados = enderecos.map(endereco => ({ 
-            ...endereco, 
-            principal: false 
-          }));
-          setEnderecos(enderecosAtualizados);
-        }
-        enderecoCompleto.principal = true;
-      }
 
       const resultado = await enderecoService.criaEndereco(enderecoCompleto);
 
       if (resultado) {
-        await buscarEnderecos(); // Recarregar lista
+        await buscarEnderecos(); // Recarregar lista com estado do servidor
         return true;
-      } else {
-        setError('Erro ao criar endereço');
-        return false;
       }
+
+      // se chegou aqui, operação não retornou sucesso
+      setError('Erro ao criar endereço');
+      // restaura snapshot caso tenhamos aplicado otimização
+      if (snapshotEnderecos) setEnderecos(snapshotEnderecos);
+      return false;
     } catch (err) {
       const mensagem = err instanceof Error ? err.message : 'Erro desconhecido ao criar endereço';
       setError(mensagem);
+      // rollback da atualização otimista
+      if (snapshotEnderecos) setEnderecos(snapshotEnderecos);
       return false;
     } finally {
       setLoading(false);
@@ -169,7 +164,7 @@ export function EnderecoProvider({ children }: EnderecoProviderProps) {
       const resultado = await enderecoService.atualizarEndereco(id, dados);
 
       if (resultado) {
-        await buscarEnderecos(); // Recarregar lista
+        await buscarEnderecos(); 
         return true;
       } else {
         setError('Erro ao atualizar endereço');
@@ -192,7 +187,7 @@ export function EnderecoProvider({ children }: EnderecoProviderProps) {
       const resultado = await enderecoService.removerEndereco(id);
 
       if (resultado) {
-        await buscarEnderecos(); // Recarregar lista
+        await buscarEnderecos(); 
         return true;
       } else {
         setError('Erro ao remover endereço');
@@ -215,7 +210,7 @@ export function EnderecoProvider({ children }: EnderecoProviderProps) {
       const resultado = await enderecoService.definirEnderecoPrincipal(user!.id, id);
 
       if (resultado) {
-        await buscarEnderecos(); // Recarregar lista
+        await buscarEnderecos(); 
         return true;
       } else {
         setError('Erro ao definir endereço principal');
@@ -230,9 +225,6 @@ export function EnderecoProvider({ children }: EnderecoProviderProps) {
     }
   };
 
-  // ============================================================================
-  // 🛠️ UTILITÁRIOS
-  // ============================================================================
 
   const limparErro = () => setError(null);
 
@@ -243,7 +235,7 @@ export function EnderecoProvider({ children }: EnderecoProviderProps) {
   const validarEndereco = (endereco: Partial<EnderecoData>): { valido: boolean; erros: string[] } => {
     const erros: string[] = [];
 
-    // Validações obrigatórias
+  
     if (!endereco.tipo) erros.push('Tipo de endereço é obrigatório');
     if (!endereco.cep) erros.push('CEP é obrigatório');
     if (!endereco.logradouro) erros.push('Logradouro é obrigatório');
@@ -253,7 +245,7 @@ export function EnderecoProvider({ children }: EnderecoProviderProps) {
     if (!endereco.estado) erros.push('Estado é obrigatório');
     if (!endereco.pais) erros.push('País é obrigatório');
 
-    // Validação de CEP brasileiro
+  
     if (endereco.cep) {
       const cepLimpo = endereco.cep.replace(/[^\d]/g, '');
       if (cepLimpo.length !== 8) {
@@ -261,13 +253,12 @@ export function EnderecoProvider({ children }: EnderecoProviderProps) {
       }
     }
 
-    // Validação de tipo
+ 
     const tiposValidos = ['residencial', 'comercial', 'trabalho', 'outro'];
     if (endereco.tipo && !tiposValidos.includes(endereco.tipo.toLowerCase())) {
       erros.push('Tipo de endereço inválido');
     }
 
-    // Validação de estado brasileiro
     const estadosValidos = [
       'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA',
       'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN',
@@ -283,25 +274,23 @@ export function EnderecoProvider({ children }: EnderecoProviderProps) {
     };
   };
 
-  // ============================================================================
-  // 🎯 PROVIDER VALUE
-  // ============================================================================
+
 
   const value: EnderecoContextType = {
-    // Estado
+   
     enderecos,
     enderecoPrincipal,
     loading,
     error,
     
-    // Ações
+   
     criarEndereco,
     buscarEnderecos,
     atualizarEndereco,
     removerEndereco,
     definirEnderecoPrincipal,
     
-    // Utilitários
+    
     limparErro,
     recarregarEnderecos,
     validarEndereco,

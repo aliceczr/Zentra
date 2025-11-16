@@ -33,7 +33,7 @@ export const authService = {
         throw new Error('Senha deve ter pelo menos 6 caracteres.');
       }
       
-      throw new Error(error.message);
+      throw error;
     }
 
     return data;
@@ -46,7 +46,7 @@ export const authService = {
     });
 
     if (error) {
-      throw new Error(error.message);
+      throw error;
     }
 
     return data;
@@ -56,7 +56,7 @@ export const authService = {
     const { error } = await supabase.auth.signOut();
     
     if (error) {
-      throw new Error(error.message);
+      throw error;
     }
   },
 
@@ -64,7 +64,7 @@ export const authService = {
     const { data: { user }, error } = await supabase.auth.getUser();
     
     if (error) {
-      throw new Error(error.message);
+      throw error;
     }
 
     return user;

@@ -19,9 +19,7 @@ import {
 import { formatarValor } from '../../hooks/hooksPagamento';
 import { Pedido } from '../../services/pedidoService';
 
-// ============================================================================
-// 📋 COMPONENTE CARD DE PEDIDO
-// ============================================================================
+
 
 interface PedidoCardProps {
   pedido: Pedido;
@@ -29,7 +27,7 @@ interface PedidoCardProps {
 }
 
 function PedidoCard({ pedido, onPress }: PedidoCardProps) {
-  const statusInfo = formatarStatusPedido(pedido); // ✅ Passa o pedido completo
+  const statusInfo = formatarStatusPedido(pedido);
   const temMedicamentoControlado = pedido.itens?.some(item => 
     item.produto?.controlado || item.produto?.requer_receita
   ) || false;
@@ -101,9 +99,7 @@ function PedidoCard({ pedido, onPress }: PedidoCardProps) {
   );
 }
 
-// ============================================================================
-// 📱 COMPONENTE PRINCIPAL - HISTÓRICO SIMPLES
-// ============================================================================
+
 
 export default function HistoricoScreen() {
   const router = useRouter();
@@ -206,9 +202,6 @@ export default function HistoricoScreen() {
   );
 }
 
-// ============================================================================
-// 🎨 ESTILOS
-// ============================================================================
 
 const styles = StyleSheet.create({
   container: {

@@ -24,24 +24,22 @@ export default function HomeScreen() {
   const { profile, fetchUserProfile } = useUser();
   const { quantidade } = useCarrinhoContador();
   
-  // Limpar filtros e recarregar produtos quando voltar para a home
   useFocusEffect(
     React.useCallback(() => {
       limparFiltros();
       carregarProdutos({});
-      // Buscar perfil do usuário
+   
       if (user) {
         fetchUserProfile();
       }
     }, [user])
   );
 
-  // Produtos em promoção - apenas produtos com destaque = true
   const produtosPromocao = produtos.filter(produto => produto.destaque).slice(0, 3);
   const handleCategoriaPress = async (categoriaId: number) => {
-    // Usa o método específico que atualiza e executa a busca imediatamente
+  
     await filtrarPorCategoria(categoriaId);
-    // Navega para a lista que já terá os produtos filtrados
+   
     router.push('/(tabs)/list_produtos');
   };
 
@@ -52,9 +50,6 @@ export default function HomeScreen() {
 
 
   const renderProdutoPromocao = ({ item }: { item: any }) => {
-    console.log('🖼️ HOME: Renderizando produto:', item.nome);
-    console.log('🖼️ HOME: URL da imagem:', item.imagem_principal);
-    
     return (
     <TouchableOpacity
       style={styles.produtoPromocaoCard}
@@ -68,8 +63,8 @@ export default function HomeScreen() {
           }}
           style={styles.produtoPromocaoImage}
           resizeMode="contain"
-          onLoad={() => console.log('✅ HOME: Imagem carregada:', item.nome)}
-          onError={(error) => console.log('❌ HOME: Erro ao carregar imagem:', item.nome, error.nativeEvent)}
+          onLoad={() => { /* imagem carregada */ }}
+          onError={(error) => console.warn('Erro ao carregar imagem de produto:', item.id)}
         />
         {/* Badge de desconto - apenas para produtos em destaque */}
         {item.destaque && (

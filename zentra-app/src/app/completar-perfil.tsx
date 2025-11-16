@@ -84,16 +84,16 @@ export default function CompletarPerfil() {
     setLoading(true);
     
     try {
-      // Preparar dados do perfil
+     
       const profileData = {
         auth_id: user.id,
         nome: nome.trim(),
-        cpf: cpf.replace(/\D/g, ''), // Remove formatação
-        telefone: telefone.replace(/\D/g, ''), // Remove formatação
-        dataNascimento: dataNascimento.split('/').reverse().join('-') // DD/MM/AAAA -> AAAA-MM-DD
+        cpf: cpf.replace(/\D/g, ''), 
+        telefone: telefone.replace(/\D/g, ''), 
+        dataNascimento: dataNascimento.split('/').reverse().join('-') // 
       };
       
-      console.log('📋 Criando perfil:', profileData);
+      
       
       await userService.createProfile(profileData);
       
@@ -111,7 +111,7 @@ export default function CompletarPerfil() {
       );
       
     } catch (error) {
-      console.error('❌ Erro ao completar perfil:', error);
+      console.error('Erro ao completar perfil:', error);
       Alert.alert('Erro', 'Erro ao salvar perfil. Tente novamente.');
     } finally {
       setLoading(false);

@@ -5,27 +5,27 @@ export function useCarrinho() {
   const context = useCarrinhoContext();
   
   return {
-    // Estado completo
+   
     itens: context.itens,
     resumo: context.resumo,
     loading: context.loading,
     error: context.error,
     
-    // Ações principais
+   
     adicionarProduto: context.adicionarProduto,
     removerProduto: context.removerProduto,
     atualizarQuantidade: context.atualizarQuantidade,
     limparCarrinho: context.limparCarrinho,
     
-    // Consultas
+    
     temNoCarrinho: context.temNoCarrinho,
     obterQuantidade: context.obterQuantidade,
     
-    // Utilitários
+    
     recarregarCarrinho: context.recarregarCarrinho,
     validarCarrinho: context.validarCarrinho,
     
-    // Propriedades derivadas úteis
+   
     isEmpty: context.itens.length === 0,
     quantidadeItens: context.resumo.quantidadeItens,
     quantidadeTotal: context.resumo.quantidadeTotal,
@@ -38,12 +38,12 @@ export function useCarrinhoContador() {
   const { resumo, loading } = useCarrinhoContext();
   
   return {
-    quantidade: resumo.quantidadeTotal, // Total de itens (considerando quantidades)
-    itens: resumo.quantidadeItens,      // Número de produtos diferentes
-    valor: resumo.valorTotal,           // Valor total em R$
+    quantidade: resumo.quantidadeTotal, 
+    itens: resumo.quantidadeItens,      
+    valor: resumo.valorTotal,       
     loading,
     
-    // Propriedades derivadas
+    
     temItens: resumo.quantidadeItens > 0,
     valorFormatado: `R$ ${resumo.valorTotal.toFixed(2).replace('.', ',')}`,
   };
@@ -59,7 +59,7 @@ export function useAdicionarAoCarrinho() {
     obterQuantidade,
     loading,
     
-    // Função auxiliar para adicionar com feedback
+    
     adicionarComFeedback: async (produto: Produto, quantidade: number = 1) => {
       try {
         await adicionarProduto(produto, quantidade);
@@ -89,13 +89,13 @@ export function useItemCarrinho(produtoId: number) {
     quantidade,
     loading,
     
-    // Ações do item
+   
     incrementar: () => atualizarQuantidade(produtoId, quantidade + 1),
     decrementar: () => atualizarQuantidade(produtoId, Math.max(0, quantidade - 1)),
     remover: () => removerProduto(produtoId),
     definirQuantidade: (novaQuantidade: number) => atualizarQuantidade(produtoId, novaQuantidade),
     
-    // Propriedades derivadas
+    
     podeDecrementar: quantidade > 1,
     podeIncrementar: true,
   };
@@ -119,12 +119,12 @@ export function useListaCarrinho() {
     loading,
     error,
     
-    // Ações da lista
+   
     limparTudo: limparCarrinho,
     validar: validarCarrinho,
     recarregar: recarregarCarrinho,
     
-    // Propriedades derivadas
+    
     isEmpty: itens.length === 0,
     valorTotalFormatado: `R$ ${resumo.valorTotal.toFixed(2).replace('.', ',')}`,
     quantidadeItensTexto: resumo.quantidadeItens === 1 
@@ -146,7 +146,6 @@ export function useCarrinhoValidacao() {
     loading,
     error,
     
-    // Função para validar quando app fica ativo
     validarSeNecessario: async () => {
       if (!loading) {
         await validarCarrinho();
@@ -159,7 +158,7 @@ export function useCarrinhoValidacao() {
 export function useCarrinhoCheckout() {
   const { itens, resumo, loading, validarCarrinho } = useCarrinhoContext();
   
-  // Validar se carrinho está pronto para checkout
+
   const podeFinalizarCompra = itens.length > 0 && !loading;
   
   return {
@@ -168,9 +167,9 @@ export function useCarrinhoCheckout() {
     loading,
     podeFinalizarCompra,
     
-    // Preparar dados para checkout
+  
     prepararCheckout: async () => {
-      // Validar carrinho antes do checkout
+      
       await validarCarrinho();
       
       return {
@@ -186,7 +185,6 @@ export function useCarrinhoCheckout() {
       };
     },
     
-    // Propriedades úteis para checkout
     valorTotalFormatado: `R$ ${resumo.valorTotal.toFixed(2).replace('.', ',')}`,
     temItensControlados: itens.some(item => item.produto.controlado),
     temItensComReceita: itens.some(item => item.produto.requer_receita),

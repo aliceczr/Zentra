@@ -19,18 +19,15 @@ export default function Entrar() {
     const success = await handleSignIn(email, password);
     
     if (success) {
-      console.log('✅ Login realizado! Verificando perfil...');
       
       // Verificar se usuário tem perfil completo
       try {
         const profile = await userService.getUserProfile();
         
         if (profile) {
-          console.log('✅ Perfil encontrado, redirecionando para home');
           Alert.alert('Bem-vindo de volta!', 'Login realizado com sucesso!');
           router.replace('/(tabs)/home');
         } else {
-          console.log('ℹ️ Perfil não encontrado, redirecionando para completar');
           Alert.alert(
             'Complete seu perfil',
             'Para continuar, complete seus dados pessoais.',
@@ -38,7 +35,6 @@ export default function Entrar() {
           );
         }
       } catch (error) {
-        console.log('ℹ️ Erro ao buscar perfil (provavelmente não existe), redirecionando para completar');
         Alert.alert(
           'Complete seu perfil',
           'Para continuar, complete seus dados pessoais.',

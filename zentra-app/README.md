@@ -2,109 +2,167 @@
 
 **E-commerce mobile moderno construído com React Native + Expo + Supabase**
 
-Um aplicativo de comércio eletrônico completo com autenticação, catálogo de produtos, carrinho de compras, sistema de pagamento e histórico de pedidos.
+Um aplicativo de comércio eletrônico completo com autenticação, catálogo de produtos, carrinho de compras, sistema de pagamento integrado com Mercado Pago e histórico de pedidos.
 
 ---
 
-## 📱 Funcionalidades
+## � Índice
 
-- 🔐 **Autenticação completa** - Login, cadastro e recuperação de senha
-- 👤 **Gestão de perfil** - Dados pessoais e endereços
-- 🛒 **Carrinho inteligente** - Adicionar, remover e modificar produtos
-- 💳 **Sistema de pagamento** - Integração com Stripe
-- 📦 **Histórico de pedidos** - Acompanhamento de compras
-- 🔍 **Busca e filtros** - Encontre produtos facilmente
-- 📍 **Gestão de endereços** - Múltiplos endereços de entrega
+- [Funcionalidades](#-funcionalidades)
+- [Arquitetura](#-arquitetura)
+- [Estrutura de Pastas](#-estrutura-de-pastas)
+- [Pré-requisitos](#-pré-requisitos)
+- [Instalação e Execução](#-instalação-e-execução)
+- [Configuração](#-configuração)
+- [Tecnologias Utilizadas](#-tecnologias-utilizadas)
+
+---
+
+## �📱 Funcionalidades
+
+- 🔐 **Autenticação completa** - Login, cadastro e gerenciamento de sessões
+- 👤 **Gestão de perfil** - Edição de dados pessoais e avatar
+- 🛒 **Carrinho inteligente** - Adicionar, remover e modificar quantidades
+- 💳 **Sistema de pagamento** - Integração com Mercado Pago
+- 📦 **Histórico de pedidos** - Acompanhamento detalhado de compras
+- 🏠 **Gestão de endereços** - Cadastro e edição de endereços de entrega
+- 🎯 **Catálogo de produtos** - Navegação e busca de produtos
 
 ---
 
 ## 🏗️ Arquitetura
 
-O projeto segue o padrão **Context + Hooks + Services** para uma separação clara de responsabilidades:
+O projeto segue uma arquitetura em camadas com separação de responsabilidades, utilizando o padrão **Context + Hooks + Services**:
 
 ```
-📁 ARQUITETURA
-├── 🎯 Services     → Lógica de API e comunicação com Supabase
-├── 🌐 Contexts     → Estado global da aplicação
-├── 🔄 Hooks        → Lógica de negócio e effects customizados
-└── 🧩 Components   → Componentes de UI reutilizáveis
+┌─────────────────────────────────────────────┐
+│            UI Layer (Screens)               │
+│        app/, components/                    │
+└──────────────┬──────────────────────────────┘
+               │
+┌──────────────▼──────────────────────────────┐
+│         Business Logic (Hooks)              │
+│        Lógica de negócio e effects          │
+└──────────────┬──────────────────────────────┘
+               │
+┌──────────────▼──────────────────────────────┐
+│        State Management (Contexts)          │
+│        Estado global da aplicação           │
+└──────────────┬──────────────────────────────┘
+               │
+┌──────────────▼──────────────────────────────┐
+│          Data Layer (Services)              │
+│      APIs, Supabase, Storage Local          │
+└─────────────────────────────────────────────┘
 ```
 
-### 🎯 **Services Layer**
-Responsável pela comunicação com APIs externas e Supabase:
-- `authService.ts` - Autenticação e sessões
-- `userService.ts` - Gestão de perfis de usuário
-- `produtoService.ts` - Catálogo e busca de produtos
-- `carrinhoService.ts` - Operações do carrinho
-- `enderecoService.ts` - Gestão de endereços
-- `pagamentoService.ts` - Processamento de pagamentos
-- `pedidoService.ts` - Histórico e status de pedidos
-
-### 🌐 **Contexts Layer**
-Gerencia o estado global da aplicação:
-- `AuthContext.tsx` - Estado de autenticação
-- `UserContext.tsx` - Dados do usuário logado
-- `produtoContext.tsx` - Estado do catálogo
-- `carrinhoContext.tsx` - Estado do carrinho
-- `enderecoContext.tsx` - Endereços do usuário
-- `pagamentoContext.tsx` - Estado de pagamentos
-
-### 🔄 **Hooks Layer**
-Lógica de negócio reutilizável:
-- `useAuth.ts` - Hooks de autenticação
-- `userProfile.ts` - Gestão de perfil
-- `hooksProdutos.ts` - Lógica do catálogo
-- `hooksCarrinho.ts` - Operações do carrinho
-- `userEndereco.ts` - Gestão de endereços
-- `hooksPagamento.ts` - Processamento de pagamentos
-- `hooksHistorico.ts` - Histórico de pedidos
-
-### 🧩 **Components Layer**
-Componentes de UI reutilizáveis:
-- `components_produto.tsx` - Cards e listas de produtos
-- `EditarPerfilModal.tsx` - Modal de edição de perfil
-- `EditarEnderecoModal.tsx` - Modal de endereços
-- `Confetti.tsx` - Animações de sucesso
-- `style.styles.ts` - Estilos globais
-
----
-
-## 📂 Estrutura de Pastas
+## 📁 Estrutura de Pastas
 
 ```
 zentra-app/
-├── 📱 src/
-│   ├── 🏠 app/                    # Screens (Expo Router)
-│   │   ├── (tabs)/               # Navegação principal
-│   │   │   ├── home.tsx          # Tela inicial
-│   │   │   ├── list_produtos.tsx # Catálogo de produtos
-│   │   │   ├── carrinho.tsx      # Carrinho de compras
-│   │   │   ├── historico.tsx     # Histórico de pedidos
-│   │   │   ├── perfil.tsx        # Perfil do usuário
-│   │   │   └── pagamento.tsx     # Checkout
-│   │   ├── pedido-detalhes/      # Detalhes do pedido
-│   │   ├── produto/              # Detalhes do produto
-│   │   ├── cadastro.tsx          # Tela de cadastro
+├── src/
+│   ├── app/                      # Telas da aplicação (Expo Router)
+│   │   ├── (tabs)/              # Navegação por abas
+│   │   │   ├── home.tsx         # Tela inicial
+│   │   │   ├── list_produtos.tsx # Lista de produtos
+│   │   │   ├── carrinho.tsx     # Carrinho de compras
+│   │   │   ├── perfil.tsx       # Perfil do usuário
+│   │   │   └── historico.tsx    # Histórico de pedidos
+│   │   ├── produto/
+│   │   │   └── [id].tsx         # Detalhes do produto (rota dinâmica)
+│   │   ├── pedido-detalhes/
+│   │   │   └── [id].tsx         # Detalhes do pedido (rota dinâmica)
 │   │   ├── entrar.tsx           # Tela de login
-│   │   ├── endereco.tsx         # Gestão de endereços
-│   │   └── completar-perfil.tsx # Completar cadastro
-│   ├── 🧩 components/            # Componentes reutilizáveis
-│   ├── 🌐 contexts/              # Context API
-│   ├── 🔄 hooks/                 # Custom Hooks
-│   ├── 🎯 services/              # Serviços de API
-│   ├── ⚙️ config/                # Configurações
-│   └── 🎨 assets/                # Imagens e fontes
-├── 🔧 Configuration Files
-│   ├── package.json              # Dependências
-│   ├── app.json                  # Configuração do Expo
-│   ├── tsconfig.json            # TypeScript config
-│   └── supabase-client.ts       # Cliente Supabase
-└── 📋 Documentation
-    ├── README.md                # Este arquivo
-    └── .env.example            # Template de variáveis
+│   │   ├── cadastro.tsx         # Tela de cadastro
+│   │   ├── completar-perfil.tsx # Completar cadastro
+│   │   ├── endereco.tsx         # Seleção/cadastro de endereço
+│   │   ├── pagamento.tsx        # Tela de pagamento
+│   │   ├── aguardando-pagamento.tsx # Aguardando confirmação
+│   │   ├── compra-sucesso.tsx   # Confirmação de compra
+│   │   └── _layout.tsx          # Layout raiz
+│   ├── components/              # Componentes reutilizáveis
+│   ├── contexts/                # Contextos do React (estado global)
+│   ├── hooks/                   # Hooks customizados
+│   ├── services/                # Serviços de API e lógica de dados
+│   ├── config/                  # Configurações
+│   ├── utils/                   # Funções utilitárias
+│   ├── assets/                  # Recursos estáticos (imagens, fontes)
+│   └── index.ts                 # Ponto de entrada
+├── supabase-client.ts           # Configuração do cliente Supabase
+├── app.json                     # Configuração do Expo
+├── package.json                 # Dependências do projeto
+├── tsconfig.json                # Configuração do TypeScript
+└── README.md                    # Este arquivo
 ```
 
 ---
+
+## ⚙️ Pré-requisitos
+
+Antes de começar, certifique-se de ter instalado:
+
+- **Node.js** 18+ ([Download](https://nodejs.org/))
+- **npm** ou **yarn** (incluído com Node.js)
+- **Expo Go** no seu smartphone
+  - [Android (Google Play)](https://play.google.com/store/apps/details?id=host.exp.exponent)
+  - [iOS (App Store)](https://apps.apple.com/br/app/expo-go/id982107779)
+
+### 📱 Preparação do Dispositivo Móvel
+
+1. Instale o aplicativo **Expo Go** no seu celular
+2. Conecte o celular na **mesma rede Wi-Fi** que seu computador
+3. Mantenha o Expo Go aberto durante o desenvolvimento
+
+## 🔧 Configuração
+
+## 🛠️ Tecnologias Utilizadas
+
+### Core
+- **React Native** 0.81 - Framework mobile
+- **Expo** 54 - Plataforma de desenvolvimento
+- **TypeScript** 5.9 - Tipagem estática
+- **Expo Router** 6.0 - Navegação baseada em arquivos
+
+### Backend & Estado
+- **Supabase** 2.76 - Backend as a Service (BaaS)
+- **React Context API** - Gerenciamento de estado global
+- **AsyncStorage** 2.2 - Persistência local
+
+### Pagamento
+- **Mercado Pago** 2.10 - Gateway de pagamento
+- **Stripe** 19.2 - Processamento de pagamentos alternativo
+
+---
+
+## 📝 Scripts Disponíveis
+
+```bash
+npm start          # Inicia o servidor de desenvolvimento
+npm run android    # Abre no emulador Android
+npm run ios        # Abre no simulador iOS
+npm run web        # Abre versão web
+npm test           # Executa testes
+```
+
+---
+
+## ⚠️ Avisos Importantes
+
+### 🔑 Credenciais Necessárias
+
+- **Supabase**: URL e Anon Key são obrigatórias
+
+### 🌐 Conectividade
+
+- Certifique-se de estar na **mesma rede Wi-Fi** (modo LAN)
+- Use modo **tunnel** se tiver problemas de conexão
+
+### 📱 Dispositivo Físico Recomendado
+
+- O app foi desenvolvido para dispositivos móveis reais
+- Emuladores podem funcionar, mas o teste em dispositivo real é recomendado
+- Funcionalidades como notificações funcionam melhor em dispositivos reais
+
 
 ## ⚙️ Configuração do Ambiente
 
@@ -115,13 +173,8 @@ zentra-app/
    - Download: [nodejs.org](https://nodejs.org/)
    - Verifique: `node --version`
 
-2. **npm** (vem com Node.js) ou **yarn**
+2. **npm** (vem com Node.js) 
    - Verifique npm: `npm --version`
-   - Ou instale yarn: `npm install -g yarn`
-
-3. **Git** para controle de versão
-   - Download: [git-scm.com](https://git-scm.com/)
-   - Verifique: `git --version`
 
 #### **Para testar no dispositivo móvel:**
 - **Expo Go** app (Android/iOS) - Download na loja de apps
@@ -191,21 +244,7 @@ npm start
 ---
 
 ## 🚀 Executando o Projeto
-
-### 🎯 **Opção 1: Expo Dev Client (Recomendado)**
-```bash
-# Inicia o servidor de desenvolvimento
-npm start
-
-# Ou com cache limpo (se houver problemas)
-npx expo start --clear
-```
-
-### 🌐 **Opção 2: Expo Go (Mais simples para iniciantes)**
-```bash
-# Inicia com foco no Expo Go app
-npx expo start --go
-```
+ 
 
 ### 🔗 **Opção 3: Tunnel (Para testes remotos)**
 ```bash
@@ -239,5 +278,9 @@ npx expo start --android
 ``
 
 ---
+
+
+
+
 
 

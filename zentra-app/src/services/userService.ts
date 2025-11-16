@@ -47,7 +47,7 @@ export const userService = {
             .insert([insertData]);
             
         if (error) {
-            throw new Error(error.message);
+            throw error;
         }
         
         return data;
@@ -67,7 +67,7 @@ export const userService = {
             .single();
 
         if (error) {
-            throw new Error(error.message);
+            throw error;
         }
 
         return data;
@@ -95,7 +95,7 @@ export const userService = {
             .single();
 
         if (error) {
-            throw new Error(error.message);
+            throw error;
         }
 
         return data;

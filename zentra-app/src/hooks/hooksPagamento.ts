@@ -8,14 +8,6 @@ import {
   StatusPagamento
 } from '../services/pedidoService';
 
-// ================================
-// HOOK PRINCIPAL DO PAGAMENTO
-// ================================
-
-/**
- * Hook principal para gerenciar pagamentos
- * Use em telas de checkout, histórico, etc.
- */
 export function usePagamento() {
   const {
     pagamentos,
@@ -34,14 +26,14 @@ export function usePagamento() {
   } = usePagamentoContext();
 
   return {
-    // Estado
+  
     pagamentos,
     pagamentoAtual,
     loading,
     error,
     filtros,
     
-    // Ações
+    
     criarPagamento: criarNovoPagamento,
     buscarPorId: buscarPagamento,
     listar: listarPagamentos,
@@ -51,20 +43,14 @@ export function usePagamento() {
     limparErro,
     recarregar: recarregarDados,
     
-    // Propriedades derivadas
+   
     temPagamentos: pagamentos.length > 0,
     quantidadePagamentos: pagamentos.length,
   };
 }
 
-// ================================
-// HOOK PARA CRIAR PAGAMENTO
-// ================================
 
-/**
- * Hook especializado para criar pagamentos
- * Use em telas de checkout, finalização de compra
- */
+
 export function useCriarPagamento() {
   const { criarNovoPagamento, loading, error } = usePagamentoContext();
   const [processando, setProcessando] = useState(false);
@@ -97,14 +83,7 @@ export function useCriarPagamento() {
   };
 }
 
-// ================================
-// HOOK PARA MÉTODOS DE PAGAMENTO
-// ================================
 
-/**
- * Hook para gerenciar métodos de pagamento do usuário
- * Use em telas de configuração, checkout
- */
 export function useMetodosPagamento() {
   const {
     metodosUsuario,
@@ -116,17 +95,16 @@ export function useMetodosPagamento() {
   } = usePagamentoContext();
 
   return {
-    // Estado
+   
     metodos: metodosUsuario,
     principal: metodoPrincipal,
     loading,
     error,
     
-    // Ações
+ 
     carregar: carregarMetodosUsuario,
     definirPrincipal: definirMetodoPrincipal,
     
-    // Propriedades derivadas
     temMetodos: metodosUsuario.length > 0,
     quantidadeMetodos: metodosUsuario.length,
     metodosCartao: metodosUsuario.filter(m => m.tipo === 'CARTAO_CREDITO' || m.tipo === 'CARTAO_DEBITO'),
@@ -134,14 +112,7 @@ export function useMetodosPagamento() {
   };
 }
 
-// ================================
-// HOOK PARA HISTÓRICO DE PAGAMENTOS
-// ================================
 
-/**
- * Hook para visualizar histórico de pagamentos
- * Use em telas de histórico, relatórios
- */
 export function useHistoricoPagamento(usuarioId?: string) {
   const { listarPagamentos, pagamentos, loading, error } = usePagamentoContext();
 
@@ -162,36 +133,29 @@ export function useHistoricoPagamento(usuarioId?: string) {
   }, [listarPagamentos, usuarioId]);
 
   return {
-    // Estado
+    
     historico: pagamentos,
     loading,
     error,
     
-    // Ações
+   
     carregar: carregarHistorico,
     
-    // Propriedades derivadas
+   
     temHistorico: pagamentos.length > 0,
     totalPago: pagamentos
-      .filter(p => p.status_pagamento === 'APROVADO')
-      .reduce((total, p) => total + p.valor_pago, 0),
+      .filter(p => p.status === 'APROVADO')
+      .reduce((total, p) => total + (p.valor_pago ?? 0), 0),
     quantidadePagamentos: pagamentos.length,
     
-    // Estatísticas
-    pagamentosAprovados: pagamentos.filter(p => p.status_pagamento === 'APROVADO'),
-    pagamentosPendentes: pagamentos.filter(p => p.status_pagamento === 'PENDENTE'),
-    pagamentosRecusados: pagamentos.filter(p => p.status_pagamento === 'RECUSADO'),
+    
+  pagamentosAprovados: pagamentos.filter(p => p.status === 'APROVADO'),
+  pagamentosPendentes: pagamentos.filter(p => p.status === 'PENDENTE'),
+  pagamentosRecusados: pagamentos.filter(p => p.status === 'RECUSADO'),
   };
 }
 
-// ================================
-// HOOK PARA STATUS DE PAGAMENTO
-// ================================
 
-/**
- * Hook para acompanhar status de um pagamento específico
- * Use em telas de acompanhamento, confirmação
- */
 export function useStatusPagamento(pagamentoId?: number) {
   const { buscarPagamento, atualizarStatusPagamento, pagamentoAtual, loading, error } = usePagamentoContext();
   const [atualizando, setAtualizando] = useState(false);
@@ -205,13 +169,13 @@ export function useStatusPagamento(pagamentoId?: number) {
   const atualizarStatus = useCallback(async (novoStatus: StatusPagamento, dadosAdicionais?: any) => {
     if (!pagamentoId) return false;
 
-    try {
-      setAtualizando(true);
-      await atualizarStatusPagamento(pagamentoId, {
-        status_pagamento: novoStatus,
-        dados_pagamento: dadosAdicionais,
-        data_confirmacao: novoStatus === 'APROVADO' ? new Date().toISOString() : undefined,
-      });
+      try {
+        setAtualizando(true);
+        await atualizarStatusPagamento(pagamentoId, {
+          status: novoStatus,
+          status_detail: dadosAdicionais ? JSON.stringify(dadosAdicionais) : undefined,
+          data_aprovacao: novoStatus === 'APROVADO' ? new Date().toISOString() : undefined,
+        });
       return true;
     } catch (error) {
       console.error('Erro ao atualizar status:', error);
@@ -222,24 +186,24 @@ export function useStatusPagamento(pagamentoId?: number) {
   }, [atualizarStatusPagamento, pagamentoId]);
 
   return {
-    // Estado
+   
     pagamento: pagamentoAtual,
-    status: pagamentoAtual?.status_pagamento,
+    status: pagamentoAtual?.status,
     loading: loading || atualizando,
     error,
     
-    // Ações
+ 
     acompanhar,
     aprovar: () => atualizarStatus('APROVADO'),
     recusar: (motivo?: string) => atualizarStatus('RECUSADO', { motivo_recusa: motivo }),
     cancelar: (motivo?: string) => atualizarStatus('CANCELADO', { motivo_cancelamento: motivo }),
     
-    // Propriedades derivadas
-    isPendente: pagamentoAtual?.status_pagamento === 'PENDENTE',
-    isProcessando: pagamentoAtual?.status_pagamento === 'PROCESSANDO',
-    isAprovado: pagamentoAtual?.status_pagamento === 'APROVADO',
-    isRecusado: pagamentoAtual?.status_pagamento === 'RECUSADO',
-    isCancelado: pagamentoAtual?.status_pagamento === 'CANCELADO',
+    
+    isPendente: pagamentoAtual?.status === 'PENDENTE',
+    isProcessando: pagamentoAtual?.status === 'PROCESSANDO',
+    isAprovado: pagamentoAtual?.status === 'APROVADO',
+    isRecusado: pagamentoAtual?.status === 'RECUSADO',
+    isCancelado: pagamentoAtual?.status === 'CANCELADO',
   };
 }
 
@@ -279,13 +243,13 @@ export function useCheckoutPagamento() {
   };
 
   return {
-    // Estado do checkout
+    
     etapaAtual,
     metodoSelecionado,
     dadosPagamento,
     metodosDisponiveis: metodosUsuario,
     
-    // Ações
+    
     selecionarMetodo,
     definirDados,
     confirmar: confirmarPagamento,
@@ -295,7 +259,7 @@ export function useCheckoutPagamento() {
       else if (etapaAtual === 'confirmacao') setEtapaAtual('dados');
     },
     
-    // Propriedades derivadas
+  
     podeConfirmar: metodoSelecionado && dadosPagamento,
     isProcessando: etapaAtual === 'processando',
     isConcluido: etapaAtual === 'concluido',
@@ -310,9 +274,7 @@ export function formatarValor(valor: number): string {
   }).format(valor);
 }
 
-/**
- * Calcular parcelas
- */
+
 export function calcularParcelas(valor: number, parcelas: number, taxaJuros: number = 0): number {
   if (parcelas <= 1) return valor;
   
@@ -320,9 +282,6 @@ export function calcularParcelas(valor: number, parcelas: number, taxaJuros: num
   return valorComJuros / parcelas;
 }
 
-/**
- * Obter texto do status
- */
 export function obterTextoStatus(status: StatusPagamento): string {
   const statusMap: Record<StatusPagamento, string> = {
     'PENDENTE': 'Pendente',
@@ -336,25 +295,20 @@ export function obterTextoStatus(status: StatusPagamento): string {
   return statusMap[status] || status;
 }
 
-/**
- * Obter cor do status
- */
+
 export function obterCorStatus(status: StatusPagamento): string {
   const corMap: Record<StatusPagamento, string> = {
-    'PENDENTE': '#FFA500',     // Laranja
-    'PROCESSANDO': '#2196F3',  // Azul
-    'APROVADO': '#4CAF50',     // Verde
-    'RECUSADO': '#F44336',     // Vermelho
-    'CANCELADO': '#9E9E9E',    // Cinza
-    'ESTORNADO': '#FF9800'     // Laranja escuro
+    'PENDENTE': '#FFA500',     
+    'PROCESSANDO': '#2196F3',  
+    'APROVADO': '#4CAF50',     
+    'RECUSADO': '#F44336',     
+    'CANCELADO': '#9E9E9E',    
+    'ESTORNADO': '#FF9800'    
   };
   
   return corMap[status] || '#9E9E9E';
 }
 
-/**
- * Obter texto do método de pagamento
- */
 export function obterTextoMetodo(metodo: MetodoPagamento): string {
   const metodoMap: Record<MetodoPagamento, string> = {
     'CARTAO_CREDITO': 'Cartão de Crédito',
@@ -367,17 +321,13 @@ export function obterTextoMetodo(metodo: MetodoPagamento): string {
   return metodoMap[metodo] || metodo;
 }
 
-/**
- * Verificar se método suporta parcelamento
- */
+
 export function suportaParcelamento(metodo: MetodoPagamento): boolean {
   return metodo === 'CARTAO_CREDITO';
 }
 
-/**
- * Validar dados de pagamento
- */
-export function validarDadosPagamento(dados: CriarPagamento): { valido: boolean; erros: string[] } {
+
+export function validarDadosPagamento(dados: any): { valido: boolean; erros: string[] } {
   const erros: string[] = [];
 
   if (!dados.pedido_id || dados.pedido_id <= 0) {
@@ -395,7 +345,8 @@ export function validarDadosPagamento(dados: CriarPagamento): { valido: boolean;
   const metodosValidos: MetodoPagamento[] = [
     'CARTAO_CREDITO', 'CARTAO_DEBITO', 'PIX', 'BOLETO', 'DINHEIRO'
   ];
-  if (!metodosValidos.includes(dados.metodo_pagamento)) {
+  const metodoInformado = dados.metodo_pagamento || dados.metodo;
+  if (!metodosValidos.includes(metodoInformado)) {
     erros.push('Método de pagamento inválido');
   }
 

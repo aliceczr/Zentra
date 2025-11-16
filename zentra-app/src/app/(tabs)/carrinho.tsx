@@ -15,9 +15,6 @@ import { useListaCarrinho, useItemCarrinho } from '../../hooks/hooksCarrinho';
 import { ItemCarrinho } from '../../services/carrinhoService';
 import { styles } from '../../components/style.styles';
 
-// ============================================================================
-// 🛒 TELA DO CARRINHO
-// ============================================================================
 
 export default function CarrinhoScreen() {
   const router = useRouter();
@@ -58,7 +55,7 @@ export default function CarrinhoScreen() {
       return;
     }
     
-    router.push('/(tabs)/pagamentos');
+    router.push('/(tabs)/pagamento');
   };
 
   // Componente para item do carrinho
