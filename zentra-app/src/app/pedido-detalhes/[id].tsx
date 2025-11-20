@@ -18,6 +18,8 @@ import {
   calcularTempoDecorrido,
   formatarTempoEntrega
 } from '../../hooks/hooksHistorico';
+import { atualizarPagamento } from '../../services/pagamentoService';
+import { atualizarPedido } from '../../services/pedidoService';
 
 
 function formatarStatusIndividual(status: StatusPedido): { texto: string; cor: string; icone: string } {
@@ -282,10 +284,10 @@ function PagamentoInfo({ pedido }: PagamentoInfoProps) {
   const isPending = rawStatus.includes('pend') || rawStatus === 'pending';
 
   const status = isApproved
-    ? { cor: '#27ae60', texto: 'Pagamento Aprovado' }
+    ? { cor: '#27ae60', texto: 'Pagamento Aprovado', icone: 'checkmark-circle' }
     : isPending
-    ? { cor: '#f39c12', texto: 'Pendente' }
-    : { cor: '#95a5a6', texto: String(pagamentoData.status) };
+    ? { cor: '#f39c12', texto: 'Pagamento Pendente', icone: 'time-outline' }
+    : { cor: '#95a5a6', texto: String(pagamentoData.status), icone: 'alert-circle-outline' };
 
   const detectarMetodo = () => {
     if (pagamentoData.payment_type === 'credit_card') return 'Cartão de Crédito';
@@ -310,7 +312,8 @@ function PagamentoInfo({ pedido }: PagamentoInfoProps) {
       
       <View style={styles.pagamentoItem}>
         <Text style={styles.pagamentoLabel}>Status:</Text>
-        <View style={[styles.statusBadge, { backgroundColor: status.cor }]}>
+        <View style={[styles.statusBadge, { backgroundColor: status.cor, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10 }]}>
+          <Ionicons name={status.icone as any} size={14} color="#fff" style={{ marginRight: 8 }} />
           <Text style={styles.statusBadgeText}>{status.texto}</Text>
         </View>
       </View>
@@ -358,9 +361,47 @@ export default function PedidoDetalhesScreen() {
         { 
           text: 'Sim, cancelar', 
           style: 'destructive',
-          onPress: () => {
-            // Implementar cancelamento
-            Alert.alert('Sucesso', 'Pedido cancelado com sucesso');
+          onPress: async () => {
+            if (!pedido) {
+              Alert.alert('Erro', 'Pedido não encontrado para cancelamento');
+              return;
+            }
+            try {
+              // Atualiza todos os pagamentos associados para CANCELADO
+              if (pedido.pagamentos && Array.isArray(pedido.pagamentos)) {
+                await Promise.all(pedido.pagamentos.map(async (p: any) => {
+                  try {
+                    await atualizarPagamento(p.id, { status: 'CANCELADO' });
+                  } catch (err) {
+                    console.warn('Falha ao atualizar pagamento', p.id, err);
+                  }
+                }));
+              }
+
+              // Atualiza o pedido para CANCELADO
+              await atualizarPedido(pedido.id, { status: 'CANCELADO' });
+
+              // Recarrega os dados localmente
+              recarregar();
+
+              // Navega de volta para o histórico e força recarregamento lá
+              Alert.alert('Sucesso', 'Pedido e pagamentos cancelados com sucesso', [
+                {
+                  text: 'OK',
+                  onPress: () => {
+                    try {
+                      router.replace('/historico' as any);
+                    } catch (e) {
+                      // fallback: apenas volta
+                      try { router.back(); } catch (_) {}
+                    }
+                  }
+                }
+              ]);
+            } catch (err) {
+              console.error('Erro ao cancelar pedido:', err);
+              Alert.alert('Erro', 'Não foi possível cancelar o pedido. Tente novamente.');
+            }
           }
         }
       ]
@@ -420,7 +461,15 @@ export default function PedidoDetalhesScreen() {
 
   // Não permitir cancelamento se pagamento já aprovado
   const podeSerCancelado = !pagamentoAprovado && ['CRIADO', 'PAGO', 'PREPARANDO'].includes(pedido.status);
-  const statusInfo = formatarStatusPedido(pedido); // ✅ Passa pedido completo
+  // Mostrar prioridade do status de pagamento quando aplicável (ex.: pagamento pendente)
+  const pagamentoPendente = pedido.pagamentos?.some((p: any) => {
+    const s = String((p as any).status || '').toLowerCase();
+    return s.includes('pend') || s === 'pending';
+  });
+
+  const statusInfo = pagamentoPendente
+    ? { texto: 'Pagamento Pendente', cor: '#f39c12', icone: 'time-outline' }
+    : formatarStatusPedido(pedido); // ✅ Passa pedido completo
 
   return (
     <>
@@ -442,12 +491,11 @@ export default function PedidoDetalhesScreen() {
         <View style={styles.mainInfoContainer}>
           <View style={styles.pedidoHeader}>
             <Text style={styles.codigoPedido}>{pedido.codigo_pedido}</Text>
-            <View style={[styles.statusBadgeLarge, { backgroundColor: statusInfo.cor }]}>
-              <Ionicons name={statusInfo.icone as any} size={20} color="#fff" />
-              <Text style={styles.statusTextLarge}>{statusInfo.texto}</Text>
-            </View>
           </View>
-          
+
+          {/* Mostrar apenas o texto do status do pedido (sem tag ao lado) */}
+          <Text style={[styles.statusTextHeader, { color: statusInfo.cor }]}>{statusInfo.texto}</Text>
+
           <Text style={styles.dataPedido}>
             Realizado em {formatarDataPedido(pedido.created_at)}
           </Text>
@@ -592,6 +640,11 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#333',
+  },
+  statusTextHeader: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 8,
   },
   statusBadgeLarge: {
     flexDirection: 'row',

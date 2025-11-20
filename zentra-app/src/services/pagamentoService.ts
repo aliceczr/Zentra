@@ -71,10 +71,12 @@ export async function criarPagamento(dados: CriarPagamento): Promise<Pagamento> 
 
   const pagamentoData: any = {
     ...dados,
-    status: 'APROVADO',
+    // Respeitar status enviado (útil para simular recusas em testes)
+    status: (dados as any).status ?? 'PENDENTE',
     status_detail: (dados as any).status_detail || null,
     valor_pago: dados.valor_pago ?? null,
-    data_aprovacao: now,
+    // data_aprovacao apenas quando status for aprovado
+    data_aprovacao: (dados as any).data_aprovacao ?? (((dados as any).status === 'APROVADO' || (dados as any).status === 'PAGO') ? now : null),
     created_at: now,
   };
 
@@ -84,12 +86,16 @@ export async function criarPagamento(dados: CriarPagamento): Promise<Pagamento> 
 
 
   try {
-    await supabase
-      .from('pedidos')
-      .update({ status: 'PAGO' })
-      .eq('id', dados.pedido_id);
+    // Atualiza o pedido para PAGO somente quando o pagamento estiver aprovado
+    const pagoStatuses = ['APROVADO', 'PAGO', 'APPROVED'];
+    const pagamentoStatus = (pagamentoData.status || '').toString().toUpperCase();
+    if (pagoStatuses.includes(pagamentoStatus)) {
+      await supabase
+        .from('pedidos')
+        .update({ status: 'PAGO' })
+        .eq('id', dados.pedido_id);
+    }
   } catch (err) {
-
     console.error('Erro ao marcar pedido como PAGO (simulação):', err);
   }
 

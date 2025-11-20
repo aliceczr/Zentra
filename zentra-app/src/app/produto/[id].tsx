@@ -30,6 +30,8 @@ export default function ProdutoDetalhes() {
   
   const jaNoCarrinho = produto ? temNoCarrinho(produto.id) : false;
 
+  const isSoldOut = produto ? (typeof (produto as any).estoque_atual === 'number' ? (produto as any).estoque_atual <= 0 : false) : false;
+
   const [retrying, setRetrying] = useState(false);
 
   const handleVoltar = () => {
@@ -39,6 +41,17 @@ export default function ProdutoDetalhes() {
     if (!produto) return;
     
     try {
+      // Proteção: não permitir adicionar se sem estoque
+      if (isSoldOut) {
+        Alert.alert('Esgotado', 'Este produto está esgotado e não pode ser adicionado ao carrinho.');
+        return;
+      }
+      // Proteção: não permitir adicionar mais do que o estoque disponível
+      if (typeof (produto as any).estoque_atual === 'number' && quantidade > (produto as any).estoque_atual) {
+        Alert.alert('Quantidade inválida', `Apenas ${(produto as any).estoque_atual} unidade(s) disponíveis.`);
+        return;
+      }
+
       await adicionarProduto(produto, quantidade);
       
       Alert.alert(
@@ -161,23 +174,36 @@ export default function ProdutoDetalhes() {
                 
                 <TouchableOpacity 
                   style={styles.quantidadeBotao}
-                  onPress={() => setQuantidade(quantidade + 1)}
+                  onPress={() => {
+                    // Se houver informação de estoque, não ultrapassar
+                    if (typeof (produto as any).estoque_atual === 'number') {
+                      setQuantidade(q => Math.min((produto as any).estoque_atual as number, q + 1));
+                    } else {
+                      setQuantidade(q => q + 1);
+                    }
+                  }}
                 >
                   <Ionicons name="add" size={14} color="#133E4E" />
                 </TouchableOpacity>
               </View>
             </View>
             
-            <TouchableOpacity 
-              style={[styles.buyButton, loading && styles.buyButtonDisabled]} 
-              onPress={handleComprar}
-              disabled={loading}
-            >
-              <Ionicons name="cart" size={14} color="white" style={styles.buyButtonIcon} />
-              <Text style={styles.buyButtonText}>
-                {loading ? 'Adicionando...' : jaNoCarrinho ? 'Adicionar +' : 'Adicionar'}
-              </Text>
-            </TouchableOpacity>
+            {isSoldOut ? (
+              <View style={[styles.buyButton, styles.buyButtonDisabled, styles.soldOutButton]}>
+                <Text style={[styles.buyButtonText, styles.soldOutText]}>Esgotado</Text>
+              </View>
+            ) : (
+              <TouchableOpacity 
+                style={[styles.buyButton, loading && styles.buyButtonDisabled]} 
+                onPress={handleComprar}
+                disabled={loading}
+              >
+                <Ionicons name="cart" size={14} color="white" style={styles.buyButtonIcon} />
+                <Text style={styles.buyButtonText}>
+                  {loading ? 'Adicionando...' : jaNoCarrinho ? 'Adicionar +' : 'Adicionar'}
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
 
@@ -527,6 +553,20 @@ const styles = StyleSheet.create({
   },
   buyButtonIcon: {
     marginRight: 6, 
+  },
+  soldOutButton: {
+    backgroundColor: '#b0b0b0',
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'stretch',
+  },
+  soldOutText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
   },
   
   bottomSpacing: {

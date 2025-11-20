@@ -714,6 +714,25 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     marginTop: 6,
   },
+
+  // Sold out / out-of-stock styles
+  soldOutOverlay: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255,255,255,0.75)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 5,
+    borderRadius: 12,
+  },
+  soldOutText: {
+    color: '#e74c3c',
+    fontSize: 16,
+    fontWeight: '700',
+  },
   
   mobileBotaoComprarTexto: {
     color: 'white',

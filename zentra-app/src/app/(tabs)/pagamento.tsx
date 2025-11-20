@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Image,
   StyleSheet,
+  Modal,
 } from 'react-native';
 import { TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -49,6 +50,93 @@ export default function PagamentoScreen() {
   const [resumoCompra, setResumoCompra] = React.useState<ResumoCompra | null>(null);
   const [loading, setLoading] = React.useState(false);
   const [erro, setErro] = React.useState('');
+  const [modalVisible, setModalVisible] = React.useState(false);
+  const [paymentError, setPaymentError] = React.useState<string | null>(null);
+  // Estado de desenvolvimento para simular respostas de pagamento
+  // Em dev, padrão para 'APROVADO' para facilitar testes locais (estoque será decrementado).
+  const [simulateStatus, setSimulateStatus] = React.useState<'NONE' | 'APROVADO' | 'RECUSADO'>('APROVADO');
+
+  // Extrai o processamento do pagamento para permitir reuso (tentar novamente)
+  async function processPayment() {
+    setLoading(true);
+    setErro('');
+    setPaymentError(null);
+    try {
+      // Validações locais
+      if (!user || !user.id) throw new Error('Usuário não encontrado');
+      if (!enderecoEntrega || !enderecoEntrega.id) throw new Error('Endereço não encontrado');
+
+      const validacaoCartao = validarCartaoCampos();
+      if (!validacaoCartao.valido) {
+        setErro(validacaoCartao.erros.join('. '));
+        setLoading(false);
+        return;
+      }
+
+      // 1. Criar pedido
+      const pedido = await criarPedido({
+        usuario_id: user.id,
+        endereco_id: enderecoEntrega.id,
+        itens: itens.map(item => ({
+          produto_id: item.produto.id,
+          quantidade: item.quantidade,
+          preco_unitario: item.produto.preco,
+        })),
+        subtotal: resumo.valorTotal,
+        taxa_entrega: 0,
+        desconto: 0,
+        total: resumo.valorTotal,
+        observacoes: '',
+        tempo_estimado_entrega: 30,
+      });
+
+      const pagamentoPayload = {
+        pedido_id: pedido.id,
+        // permitir simulação em ambiente de desenvolvimento
+        status: simulateStatus === 'NONE' ? 'PENDENTE' : simulateStatus,
+        status_detail: metodoPagamento,
+        valor_pago: pedido.total,
+      } as any;
+
+      const pagamentoCriado = await criarPagamento(pagamentoPayload as any);
+
+      // Normalizar status vindo do serviço
+      const statusRetorno = ((pagamentoCriado as any).status_pagamento || (pagamentoCriado as any).status || '').toString().toUpperCase();
+
+      // Se pagamento não aprovado, mostrar modal com opções
+      if (statusRetorno !== 'APROVADO' && statusRetorno !== 'PAGO' && statusRetorno !== 'APPROVED') {
+        const detalhe = (pagamentoCriado as any).status_detail || (pagamentoCriado as any).metodo_pagamento || null;
+        setPaymentError(detalhe ? `Pagamento recusado: ${detalhe}` : 'Pagamento recusado. Tente outro método.');
+        setModalVisible(true);
+        setLoading(false);
+        return;
+      }
+
+      // 3. Buscar pedido completo
+      const pedidoCompleto = await buscarPedidoPorId(pedido.id);
+      if (!pedidoCompleto) throw new Error('Pedido não encontrado');
+
+      // Navegar para página de confirmação de compra
+      router.push('/compra-sucesso');
+
+    } catch (err) {
+      console.error('Erro ao processar pagamento:', err);
+      setErro(err instanceof Error ? err.message : 'Erro ao processar pagamento. Tente novamente.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // Funções para o modal
+  function handleTryAgain() {
+    setModalVisible(false);
+    processPayment();
+  }
+
+  function handleChooseOther() {
+    setModalVisible(false);
+    // apenas fecha o modal; o usuário pode escolher outro método na UI
+  }
 
   function validarCartaoCampos(): { valido: boolean; erros: string[] } {
     const erros: string[] = [];
@@ -107,6 +195,30 @@ export default function PagamentoScreen() {
           <Text style={styles.headerTitulo}>Finalizar Compra</Text>
           <View style={{ width: 40 }} />
         </View>
+        {/* Modal de pagamento recusado */}
+        <Modal
+          visible={modalVisible}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={() => setModalVisible(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalBox}>
+              <Text style={styles.modalTitle}>Pagamento recusado</Text>
+              <Text style={styles.modalText}>{paymentError || 'Seu pagamento foi recusado. Por favor, tente outro método.'}</Text>
+
+              <View style={styles.modalButtonsRow}>
+                <TouchableOpacity style={[styles.modalButton, styles.modalButtonPrimary]} onPress={handleTryAgain}>
+                  <Text style={[styles.modalButtonText, styles.modalButtonPrimaryText]}>Tentar novamente</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.modalButton} onPress={handleChooseOther}>
+                  <Text style={styles.modalButtonText}>Escolher outro método</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
         <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false} contentContainerStyle={{paddingBottom: 32}}>
           {/* Resumo da Compra */}
           <View style={styles.resumoContainer}>
@@ -272,57 +384,7 @@ export default function PagamentoScreen() {
                   marginTop: 8,
                 }}
                 disabled={loading}
-                onPress={async () => {
-                  setLoading(true);
-                  setErro('');
-                  try {
-                    // Validações locais
-                    if (!user || !user.id) throw new Error('Usuário não encontrado');
-                    if (!enderecoEntrega || !enderecoEntrega.id) throw new Error('Endereço não encontrado');
-
-                    const validacaoCartao = validarCartaoCampos();
-                    if (!validacaoCartao.valido) {
-                      setErro(validacaoCartao.erros.join('. '));
-                      setLoading(false);
-                      return;
-                    }
-
-                    // 1. Criar pedido
-                    const pedido = await criarPedido({
-                      usuario_id: user.id,
-                      endereco_id: enderecoEntrega.id,
-                      itens: itens.map(item => ({
-                        produto_id: item.produto.id,
-                        quantidade: item.quantidade,
-                        preco_unitario: item.produto.preco,
-                      })),
-                      subtotal: resumo.valorTotal,
-                      taxa_entrega: 0,
-                      desconto: 0,
-                      total: resumo.valorTotal,
-                      observacoes: '',
-                      tempo_estimado_entrega: 30,
-                    });
-                    
-                    const pagamentoPayload = {
-                      pedido_id: pedido.id,
-                      status: 'PENDENTE',
-                      status_detail: metodoPagamento, 
-                      valor_pago: pedido.total,
-                    };
-                    await criarPagamento(pagamentoPayload);
-                    // 3. Buscar pedido completo
-                    const pedidoCompleto = await buscarPedidoPorId(pedido.id);
-                    
-                    if (!pedidoCompleto) throw new Error('Pedido não encontrado');
-                    // Navegar para página de confirmação de compra
-                    router.push('/compra-sucesso');
-                  } catch (err) {
-                    console.error('Erro ao processar pagamento:', err);
-                    setErro(err instanceof Error ? err.message : 'Erro ao processar pagamento. Tente novamente.');
-                  }
-                  setLoading(false);
-                }}
+                onPress={() => processPayment()}
               >
                 <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 18 }}>
                   {loading ? 'Processando...' : 'Pagar agora'}
@@ -336,6 +398,9 @@ export default function PagamentoScreen() {
     </KeyboardAvoidingView>
   );
 }
+
+  
+
 
 const styles = StyleSheet.create({
   container: {
@@ -513,5 +578,59 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#133E4E',
     fontFamily: 'PoppinsBold',
+  },
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalBox: {
+    width: '100%',
+    maxWidth: 520,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#133E4E',
+    marginBottom: 8,
+  },
+  modalText: {
+    fontSize: 14,
+    color: '#333',
+    marginBottom: 16,
+  },
+  modalButtonsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    backgroundColor: '#f0f0f0',
+    alignItems: 'center',
+  },
+  modalButtonPrimary: {
+    backgroundColor: '#48C9B0',
+  },
+  modalButtonText: {
+    color: '#333',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  modalButtonPrimaryText: {
+    color: '#fff',
   },
 });

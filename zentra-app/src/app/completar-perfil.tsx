@@ -1,4 +1,4 @@
-import { Text, View, TouchableOpacity, TextInput, Alert, ScrollView } from 'react-native';
+import { Text, View, TouchableOpacity, TextInput, Alert, ScrollView, SafeAreaView, ActivityIndicator, Image } from 'react-native';
 import React, { useState } from 'react';
 import { router } from 'expo-router';
 import { styles } from './../components/style.styles';
@@ -117,72 +117,86 @@ export default function CompletarPerfil() {
       setLoading(false);
     }
   };
-
   return (
-    <ScrollView style={{ flex: 1 }}>
-      <Text style={[styles.titulo, { paddingTop: 20 }, { paddingLeft: 20 }]}>Complete seu Perfil</Text>
-      <Text style={[styles.texto, { padding: 30 }, { paddingTop: 20 }, { paddingLeft: 20 }]}>
-        Agora que sua conta foi confirmada, vamos completar seus dados pessoais.
-      </Text>
-      
-      <View style={{ padding: 30 }}>
-        {/* Dados Pessoais */}
-        <Text style={[styles.titulo, { fontSize: 18, marginBottom: 15 }]}>Dados Pessoais</Text>
-        
-        <Text>Nome Completo:</Text>
-        <TextInput
-          value={nome}
-          onChangeText={setNome}
-          placeholder="Digite seu nome completo"
-          style={styles.buttonForm}
-        />
-        
-        <Text>CPF:</Text>
-        <TextInput
-          value={cpf}
-          onChangeText={(text) => setCpf(formatCPF(text))}
-          placeholder="000.000.000-00"
-          style={styles.buttonForm}
-          keyboardType="numeric"
-          maxLength={14}
-        />
-        
-        <Text>Telefone:</Text>
-        <TextInput
-          value={telefone}
-          onChangeText={(text) => setTelefone(formatTelefone(text))}
-          placeholder="(00) 00000-0000"
-          style={styles.buttonForm}
-          keyboardType="phone-pad"
-          maxLength={15}
-        />
-        
-        <Text>Data de Nascimento:</Text>
-        <TextInput
-          value={dataNascimento}
-          onChangeText={(text) => setDataNascimento(formatDataNascimento(text))}
-          placeholder="DD/MM/AAAA"
-          style={styles.buttonForm}
-          keyboardType="numeric"
-          maxLength={10}
-        />
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#EAF6F6' }}>
+      <ScrollView contentContainerStyle={{ padding: 20 }} keyboardShouldPersistTaps="handled">
+        <View style={{ backgroundColor: '#fff', borderRadius: 14, padding: 20, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 8, elevation: 3 }}>
+          <Text style={[styles.titulo, { fontSize: 22, paddingBottom: 8 }]}>Complete seu perfil</Text>
+          <Text style={[styles.texto, { fontSize: 14, marginBottom: 16, color: '#556' }]}>Para finalizar seu cadastro, precisamos de algumas informações básicas.</Text>
 
-        <TouchableOpacity
-          style={[styles.buttonEntrar, loading && { opacity: 0.6 }]}
-          onPress={handleSubmit}
-          disabled={loading}
-        >
-          <Text style={styles.buttonText}>
-            {loading ? 'Salvando perfil...' : 'Completar Perfil'}
-          </Text>
-        </TouchableOpacity>
+          {/* Avatar / Identidade visual */}
+          <View style={{ alignItems: 'center', marginBottom: 18 }}>
+            <Image source={{ uri: 'https://via.placeholder.com/96x96/48C9B0/FFFFFF?text=Z' }} style={{ width: 96, height: 96, borderRadius: 48, marginBottom: 8 }} />
+            <Text style={{ color: '#133E4E', fontWeight: '600' }}>{user?.email || 'Usuário'}</Text>
+          </View>
 
-        <TouchableOpacity onPress={() => router.push('/(tabs)/home')}>
-          <Text style={[styles.texto, { textAlign: 'center', color: '#007AFF', marginTop: 15 }]}>
-            Pular por agora (completar depois)
-          </Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+          <View style={{ marginBottom: 8 }}>
+            <Text style={{ color: '#133E4E', marginBottom: 6 }}>Nome completo</Text>
+            <TextInput
+              value={nome}
+              onChangeText={setNome}
+              placeholder="Seu nome"
+              style={styles.textForm}
+              placeholderTextColor="#999"
+            />
+          </View>
+
+          <View style={{ marginBottom: 8 }}>
+            <Text style={{ color: '#133E4E', marginBottom: 6 }}>CPF</Text>
+            <TextInput
+              value={cpf}
+              onChangeText={(text) => setCpf(formatCPF(text))}
+              placeholder="000.000.000-00"
+              style={styles.textForm}
+              keyboardType="numeric"
+              maxLength={14}
+              placeholderTextColor="#999"
+            />
+          </View>
+
+          <View style={{ marginBottom: 8 }}>
+            <Text style={{ color: '#133E4E', marginBottom: 6 }}>Telefone</Text>
+            <TextInput
+              value={telefone}
+              onChangeText={(text) => setTelefone(formatTelefone(text))}
+              placeholder="(00) 00000-0000"
+              style={styles.textForm}
+              keyboardType="phone-pad"
+              maxLength={15}
+              placeholderTextColor="#999"
+            />
+          </View>
+
+          <View style={{ marginBottom: 14 }}>
+            <Text style={{ color: '#133E4E', marginBottom: 6 }}>Data de nascimento</Text>
+            <TextInput
+              value={dataNascimento}
+              onChangeText={(text) => setDataNascimento(formatDataNascimento(text))}
+              placeholder="DD/MM/AAAA"
+              style={styles.textForm}
+              keyboardType="numeric"
+              maxLength={10}
+              placeholderTextColor="#999"
+            />
+          </View>
+
+          <TouchableOpacity
+            style={{ backgroundColor: '#48C9B0', paddingVertical: 14, borderRadius: 10, alignItems: 'center' }}
+            onPress={handleSubmit}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={{ color: '#fff', fontWeight: '700' }}>Salvar e Continuar</Text>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={() => router.push('/(tabs)/home')} style={{ marginTop: 12, alignItems: 'center' }}>
+            <Text style={{ color: '#48C9B0', fontWeight: '600' }}>Pular por agora</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }

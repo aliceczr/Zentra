@@ -194,6 +194,19 @@ class SupabasePedidoService {
           .select('nome, imagem_principal, marca, fabricante')
           .eq('id', item.produto_id)
           .single();
+        // Verifica estoque se disponível
+        try {
+          const { data: pFull } = await supabase.from('produtos').select('estoque_atual').eq('id', item.produto_id).single();
+          if (pFull && typeof (pFull as any).estoque_atual === 'number') {
+            const estoque = (pFull as any).estoque_atual as number;
+            if (estoque < (item.quantidade || 0)) {
+              throw new Error(`Estoque insuficiente para o produto ${produto?.nome || item.produto_id}`);
+            }
+          }
+        } catch (err) {
+          // Repassa erro de estoque para o chamador
+          throw err;
+        }
 
         return {
           pedido_id: pedido.id,

@@ -165,6 +165,7 @@ export default function Entrar() {
           </View>
 
           {/* Sign Up Link */}
+
           <TouchableOpacity 
             onPress={() => router.push('/cadastro')}
             style={{ 

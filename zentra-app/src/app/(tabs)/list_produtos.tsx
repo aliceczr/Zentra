@@ -224,6 +224,12 @@ export default function ListProdutosScreen() {
       onPress={() => navegarParaDetalhes(item.id)}
       activeOpacity={0.7}
     >
+      {/* Mostrar overlay esgotado se estoque_atual <= 0 */}
+      {((item as any).estoque_atual !== undefined && (item as any).estoque_atual <= 0) && (
+        <View style={styles.soldOutOverlay} pointerEvents="none">
+          <Text style={styles.soldOutText}>Esgotado</Text>
+        </View>
+      )}
       {/* Badge de desconto - apenas para produtos em destaque */}
       {item.destaque && (
         <View style={styles.mobileDescontoBadge}>
@@ -262,11 +268,12 @@ export default function ListProdutosScreen() {
         
         {/* Botão comprar */}
         <TouchableOpacity 
-          style={styles.mobileBotaoComprar}
+          style={[styles.mobileBotaoComprar, ((item as any).estoque_atual !== undefined && (item as any).estoque_atual <= 0) ? { backgroundColor: '#9CA3AF' } : null]}
           onPress={(event) => handleAdicionarCarrinho(item, event)}
+          disabled={((item as any).estoque_atual !== undefined && (item as any).estoque_atual <= 0)}
         >
           <Ionicons name="cart" size={16} color="#fff" style={{ marginRight: 4 }} />
-          <Text style={styles.mobileBotaoComprarTexto}>Comprar</Text>
+          <Text style={styles.mobileBotaoComprarTexto}>{((item as any).estoque_atual !== undefined && (item as any).estoque_atual <= 0) ? 'Esgotado' : 'Comprar'}</Text>
         </TouchableOpacity>
       </View>
     </TouchableOpacity>
