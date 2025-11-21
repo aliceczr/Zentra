@@ -1,10 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Produto, buscarPorId } from './produtoService';
+import { Produto, buscarPorId, buscarPorIds } from './produtoService';
 
-// Chave para armazenamento no AsyncStorage
 const CARRINHO_KEY = '@zentra:carrinho';
 
-// Interface para item do carrinho
 export interface ItemCarrinho {
   produto: Produto;
   quantidade: number;
@@ -13,63 +11,58 @@ export interface ItemCarrinho {
   adicionadoEm: string;
 }
 
-// Interface para resumo do carrinho
+
 export interface ResumoCarrinho {
   quantidadeTotal: number;
   valorTotal: number;
   quantidadeItens: number;
 }
 
-// ============================================================================
-// 🛒 CARRINHO SERVICE - Gerenciamento com AsyncStorage
-// ============================================================================
 
 export const carrinhoService = {
-  
-  /**
-   * Carregar carrinho do AsyncStorage
-   */
+
   async carregarCarrinho(): Promise<ItemCarrinho[]> {
     try {
       const data = await AsyncStorage.getItem(CARRINHO_KEY);
       if (data) {
-        const itens: ItemCarrinho[] = JSON.parse(data);
-        
-        // Validar se os produtos ainda existem (opcional para MVP)
-        const itensValidados = await Promise.all(
-          itens.map(async (item) => {
-            try {
-              // Verificar se produto ainda existe
-              const produtoAtualizado = await buscarPorId(item.produto.id);
-              
-              // Se produto não existe mais, retorna null para remover
-              if (!produtoAtualizado) {
-                console.warn(`Produto ${item.produto.id} não encontrado, removendo do carrinho`);
-                return null;
-              }
-              
-              // Atualizar preço se mudou
-              if (produtoAtualizado.preco !== item.precoUnitario) {
-                return {
-                  ...item,
-                  precoUnitario: produtoAtualizado.preco,
-                  precoTotal: produtoAtualizado.preco * item.quantidade,
-                  produto: produtoAtualizado,
-                };
-              }
-              
-              return { ...item, produto: produtoAtualizado };
-            } catch (error) {
-              console.warn(`Produto ${item.produto.id} não encontrado, removendo do carrinho`);
-              return null; // Produto não existe mais
-            }
-          })
-        );
-        
-        // Filtrar itens nulos (produtos que não existem mais)
-        return itensValidados.filter((item): item is ItemCarrinho => item !== null);
+        // Support old format (array) and new format { version: number, items: ItemCarrinho[] }
+        let parsed: any;
+        try {
+          parsed = JSON.parse(data);
+        } catch (err) {
+          console.error('Erro ao parsear carrinho do storage:', err);
+          return [];
+        }
+
+        const itens: ItemCarrinho[] = Array.isArray(parsed) ? parsed : (parsed.items || []);
+
+        // Deduplicate ids to avoid redundant fetches
+        const idsUnicos = Array.from(new Set(itens.map(i => i.produto.id)));
+        const produtosMap = await buscarPorIds(idsUnicos);
+
+        const itensValidados: ItemCarrinho[] = [];
+        for (const item of itens) {
+          const produtoAtualizado = produtosMap.get(item.produto.id) || null;
+          if (!produtoAtualizado) {
+            console.warn(`Produto ${item.produto.id} não encontrado, removendo do carrinho`);
+            continue;
+          }
+
+          if (produtoAtualizado.preco !== item.precoUnitario) {
+            itensValidados.push({
+              ...item,
+              precoUnitario: produtoAtualizado.preco,
+              precoTotal: produtoAtualizado.preco * item.quantidade,
+              produto: produtoAtualizado,
+            });
+          } else {
+            itensValidados.push({ ...item, produto: produtoAtualizado });
+          }
+        }
+
+        return itensValidados;
       }
-      
+
       return [];
     } catch (error) {
       console.error('Erro ao carregar carrinho:', error);
@@ -77,22 +70,19 @@ export const carrinhoService = {
     }
   },
 
-  /**
-   * Salvar carrinho no AsyncStorage
-   */
+ 
   async salvarCarrinho(itens: ItemCarrinho[]): Promise<void> {
     try {
-      await AsyncStorage.setItem(CARRINHO_KEY, JSON.stringify(itens));
-      console.log('Carrinho salvo com sucesso:', itens.length, 'itens');
+      // Save with version for future migrations
+      const payload = { version: 1, items: itens };
+      await AsyncStorage.setItem(CARRINHO_KEY, JSON.stringify(payload));
     } catch (error) {
       console.error('Erro ao salvar carrinho:', error);
-      throw new Error('Falha ao salvar carrinho');
+      throw new Error(`Falha ao salvar carrinho: ${String(error)}`);
     }
   },
 
-  /**
-   * Adicionar item ao carrinho
-   */
+
   async adicionarItem(produto: Produto, quantidade: number = 1): Promise<ItemCarrinho[]> {
     try {
       const itensAtuais = await this.carregarCarrinho();
@@ -101,7 +91,7 @@ export const carrinhoService = {
       let novosItens: ItemCarrinho[];
 
       if (itemExistente) {
-        // Atualizar quantidade se já existe
+        
         novosItens = itensAtuais.map(item => {
           if (item.produto.id === produto.id) {
             const novaQuantidade = item.quantidade + quantidade;
@@ -114,7 +104,7 @@ export const carrinhoService = {
           return item;
         });
       } else {
-        // Adicionar novo item
+        
         const novoItem: ItemCarrinho = {
           produto,
           quantidade,
@@ -127,23 +117,20 @@ export const carrinhoService = {
       }
 
       await this.salvarCarrinho(novosItens);
-      console.log(`Produto ${produto.nome} adicionado ao carrinho`);
       return novosItens;
     } catch (error) {
-      console.error('Erro ao adicionar item:', error);
-      throw new Error('Falha ao adicionar produto ao carrinho');
+      console.error('Erro ao adicionar item ao carrinho:', { produtoId: produto?.id, error });
+      throw new Error(`Falha ao adicionar produto ${produto?.id} ao carrinho: ${String(error)}`);
     }
   },
 
-  /**
-   * Atualizar quantidade de um item
-   */
+
   async atualizarQuantidade(produtoId: number, novaQuantidade: number): Promise<ItemCarrinho[]> {
     try {
       const itensAtuais = await this.carregarCarrinho();
 
       if (novaQuantidade <= 0) {
-        // Remove item se quantidade é 0 ou menor
+       
         return await this.removerItem(produtoId);
       }
 
@@ -159,47 +146,39 @@ export const carrinhoService = {
       });
 
       await this.salvarCarrinho(novosItens);
-      console.log(`Quantidade atualizada para produto ${produtoId}: ${novaQuantidade}`);
       return novosItens;
     } catch (error) {
-      console.error('Erro ao atualizar quantidade:', error);
-      throw new Error('Falha ao atualizar quantidade');
+      console.error('Erro ao atualizar quantidade no carrinho:', { produtoId, novaQuantidade, error });
+      throw new Error(`Falha ao atualizar quantidade do produto ${produtoId}: ${String(error)}`);
     }
   },
 
-  /**
-   * Remover item do carrinho
-   */
+
   async removerItem(produtoId: number): Promise<ItemCarrinho[]> {
     try {
       const itensAtuais = await this.carregarCarrinho();
       const novosItens = itensAtuais.filter(item => item.produto.id !== produtoId);
 
       await this.salvarCarrinho(novosItens);
-      console.log(`Produto ${produtoId} removido do carrinho`);
       return novosItens;
     } catch (error) {
-      console.error('Erro ao remover item:', error);
-      throw new Error('Falha ao remover produto do carrinho');
+      console.error('Erro ao remover item do carrinho:', { produtoId, error });
+      throw new Error(`Falha ao remover produto ${produtoId} do carrinho: ${String(error)}`);
     }
   },
 
-  /**
-   * Limpar todo o carrinho
-   */
+
   async limparCarrinho(): Promise<void> {
     try {
       await AsyncStorage.removeItem(CARRINHO_KEY);
-      console.log('Carrinho limpo com sucesso');
+      
     } catch (error) {
       console.error('Erro ao limpar carrinho:', error);
-      throw new Error('Falha ao limpar carrinho');
+      throw new Error(`Falha ao limpar carrinho: ${String(error)}`);
     }
   },
 
-  /**
-   * Verificar se produto está no carrinho
-   */
+ 
   async temNoCarrinho(produtoId: number): Promise<boolean> {
     try {
       const itens = await this.carregarCarrinho();
@@ -210,9 +189,7 @@ export const carrinhoService = {
     }
   },
 
-  /**
-   * Obter quantidade de um produto específico
-   */
+
   async obterQuantidade(produtoId: number): Promise<number> {
     try {
       const itens = await this.carregarCarrinho();
@@ -224,9 +201,7 @@ export const carrinhoService = {
     }
   },
 
-  /**
-   * Calcular resumo do carrinho
-   */
+
   async calcularResumo(): Promise<ResumoCarrinho> {
     try {
       const itens = await this.carregarCarrinho();
@@ -249,46 +224,35 @@ export const carrinhoService = {
       };
     }
   },
-
-  /**
-   * Validar carrinho (verificar produtos removidos/preços alterados)
-   */
   async validarCarrinho(): Promise<{ itensAtualizados: ItemCarrinho[]; alteracoes: string[] }> {
     try {
       const itens = await this.carregarCarrinho();
       const alteracoes: string[] = [];
       const itensValidados: ItemCarrinho[] = [];
 
+      const idsUnicos = Array.from(new Set(itens.map(i => i.produto.id)));
+      const produtosMap = await buscarPorIds(idsUnicos);
+
       for (const item of itens) {
-        try {
-          const produtoAtualizado = await buscarPorId(item.produto.id);
-          
-          // Se produto não existe mais, pula para o catch
-          if (!produtoAtualizado) {
-            alteracoes.push(`${item.produto.nome} não está mais disponível`);
-            continue; // Não adiciona à lista validada (remove automaticamente)
-          }
-          
-          // Verificar mudança de preço
-          if (produtoAtualizado.preco !== item.precoUnitario) {
-            alteracoes.push(`Preço de ${produtoAtualizado.nome} foi atualizado`);
-            
-            itensValidados.push({
-              ...item,
-              precoUnitario: produtoAtualizado.preco,
-              precoTotal: produtoAtualizado.preco * item.quantidade,
-              produto: produtoAtualizado,
-            });
-          } else {
-            itensValidados.push({ ...item, produto: produtoAtualizado });
-          }
-        } catch (error) {
+        const produtoAtualizado = produtosMap.get(item.produto.id) || null;
+        if (!produtoAtualizado) {
           alteracoes.push(`${item.produto.nome} não está mais disponível`);
-          // Não adiciona à lista validada (remove automaticamente)
+          continue;
+        }
+
+        if (produtoAtualizado.preco !== item.precoUnitario) {
+          alteracoes.push(`Preço de ${produtoAtualizado.nome} foi atualizado`);
+          itensValidados.push({
+            ...item,
+            precoUnitario: produtoAtualizado.preco,
+            precoTotal: produtoAtualizado.preco * item.quantidade,
+            produto: produtoAtualizado,
+          });
+        } else {
+          itensValidados.push({ ...item, produto: produtoAtualizado });
         }
       }
 
-      // Salvar carrinho validado se houve alterações
       if (alteracoes.length > 0) {
         await this.salvarCarrinho(itensValidados);
       }

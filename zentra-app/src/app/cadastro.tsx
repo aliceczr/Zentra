@@ -7,7 +7,7 @@ import { styles } from './../components/style.styles';
 import { useAuthForm } from '../hooks/useAuth';
 
 export default function Cadastro() {
-  // Dados de autenticação
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -15,7 +15,7 @@ export default function Cadastro() {
   const { loading, error, handleSignUp, clearError } = useAuthForm();
 
   const handleSubmit = async () => {
-    // Etapa 1: Cadastro básico - apenas email e senha
+  
     if (!email.trim()) {
       Alert.alert('Erro', 'Email é obrigatório');
       return;
@@ -31,7 +31,7 @@ export default function Cadastro() {
       return;
     }
     
-    console.log('📋 Cadastro básico - Etapa 1:', { email });
+    
     
     const success = await handleSignUp(email, password, confirmPassword);
     
@@ -43,11 +43,11 @@ export default function Cadastro() {
           {
             text: 'OK',
             onPress: () => {
-              // Limpar campos
+            
               setEmail('');
               setPassword('');
               setConfirmPassword('');
-              // Redirecionar para tela de login
+              
               router.push('/entrar');
             }
           }

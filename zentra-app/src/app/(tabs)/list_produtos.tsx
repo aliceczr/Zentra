@@ -18,13 +18,12 @@ import { styles } from '../../components/style.styles';
 import { useAdicionarAoCarrinho, useCarrinhoContador } from '../../hooks/hooksCarrinho';
 
 export default function ListProdutosScreen() {
-  // Hook para navegação
+ 
   const router = useRouter();
-  
-  // Hook para busca de produtos via Context (Nova Arquitetura)
+ 
   const { produtos, loading, error, buscar, filtros } = useProdutosList();
   
-  // 🆕 Hook para filtros dinâmicos do banco
+
   const { 
     fabricantes, 
     marcas, 
@@ -34,21 +33,18 @@ export default function ListProdutosScreen() {
     carregarFiltros 
   } = useFiltrosDinamicos();
   
-  // Hooks do carrinho
   const adicionarAoCarrinho = useAdicionarAoCarrinho();
   const contadorCarrinho = useCarrinhoContador();
-  
-  // Estados dos filtros
+
   const [precoMin, setPrecoMin] = useState<string>('');
   const [precoMax, setPrecoMax] = useState<string>('');
   const [fabricanteSelecionado, setFabricanteSelecionado] = useState<string>('');
   const [marcaSelecionada, setMarcaSelecionada] = useState<string>('');
   const [categoriaSelecionada, setCategoriaSelecionada] = useState<string>('');
   
-  // Estado da busca por texto
   const [textoBusca, setTextoBusca] = useState<string>('');
   
-  // Sincronizar estado local com filtros do contexto
+  
   useEffect(() => {
     if (filtros.busca && filtros.busca !== textoBusca) {
       setTextoBusca(filtros.busca);
@@ -58,23 +54,23 @@ export default function ListProdutosScreen() {
     }
   }, [filtros]);
   
-  // Estados para controlar dropdowns abertos
+  
   const [fabricanteAberto, setFabricanteAberto] = useState<boolean>(false);
   const [marcaAberta, setMarcaAberta] = useState<boolean>(false);
   const [categoriaAberta, setCategoriaAberta] = useState<boolean>(false);
   
-  // Estado para controlar modal de filtros
+  
   const [modalFiltrosVisivel, setModalFiltrosVisivel] = useState<boolean>(false);
   
-  // Contador de filtros ativos
+  
   const [filtrosAtivos, setFiltrosAtivos] = useState<number>(0);
 
-  // Carregar produtos iniciais com filtros do contexto
+
   useEffect(() => {
     buscar(filtros);
   }, []);
 
-  // Atualizar contador de filtros ativos
+ 
   useEffect(() => {
     let count = 0;
     if (precoMin) count++;
@@ -82,11 +78,10 @@ export default function ListProdutosScreen() {
     if (fabricanteSelecionado) count++;
     if (marcaSelecionada) count++;
     if (categoriaSelecionada) count++;
-    if (textoBusca) count++; // Incluir busca no contador
+    if (textoBusca) count++; 
     setFiltrosAtivos(count);
   }, [precoMin, precoMax, fabricanteSelecionado, marcaSelecionada, categoriaSelecionada, textoBusca]);
 
-  // Função de debounce para busca
   const debounce = (func: Function, delay: number) => {
     let timeoutId: number;
     return (...args: any[]) => {
@@ -95,7 +90,7 @@ export default function ListProdutosScreen() {
     };
   };
 
-  // Busca com debounce - usa arquitetura Context
+ 
   const buscarComDebounce = useCallback(
     debounce((texto: string) => {
       const filtrosAtualizados = {
@@ -105,10 +100,8 @@ export default function ListProdutosScreen() {
         fabricante: fabricanteSelecionado || undefined,
         marca: marcaSelecionada || undefined,
         categoria_id: categoriaSelecionada ? parseInt(categoriaSelecionada) : undefined,
-        busca: texto || undefined, // Adiciona busca por texto
+        busca: texto || undefined, 
       };
-      
-      // Remove campos undefined para não enviar filtros vazios
       Object.keys(filtrosAtualizados).forEach(key => {
         if (filtrosAtualizados[key as keyof typeof filtrosAtualizados] === undefined) {
           delete filtrosAtualizados[key as keyof typeof filtrosAtualizados];
@@ -116,29 +109,27 @@ export default function ListProdutosScreen() {
       });
       
       buscar(filtrosAtualizados);
-    }, 500), // 500ms de delay
+    }, 500),
     [filtros, precoMin, precoMax, fabricanteSelecionado, marcaSelecionada, categoriaSelecionada]
   );
 
-  // Função para lidar com mudança no texto de busca
+  
   const handleBuscaTexto = (texto: string) => {
     setTextoBusca(texto);
     buscarComDebounce(texto);
   };
 
-  // Aplicar filtros (CORRIGIDO: agora acumula filtros anteriores)
   const aplicarFiltros = () => {
     const novosFiles = {
-      ...filtros, // ✅ Mantém filtros anteriores (incluindo busca)
+      ...filtros, 
       preco_min: precoMin ? parseFloat(precoMin) : undefined,
       preco_max: precoMax ? parseFloat(precoMax) : undefined,
       fabricante: fabricanteSelecionado || undefined,
       marca: marcaSelecionada || undefined,
       categoria_id: categoriaSelecionada ? parseInt(categoriaSelecionada) : undefined,
-      busca: textoBusca || undefined, // ✅ Inclui busca atual
+      busca: textoBusca || undefined, 
     };
     
-    // Remove campos undefined
     Object.keys(novosFiles).forEach(key => {
       if (novosFiles[key as keyof typeof novosFiles] === undefined) {
         delete novosFiles[key as keyof typeof novosFiles];
@@ -146,21 +137,19 @@ export default function ListProdutosScreen() {
     });
     
     buscar(novosFiles);
-    setModalFiltrosVisivel(false); // Fechar modal após aplicar
+    setModalFiltrosVisivel(false);
   };
 
-  // Limpar todos os filtros (CORRIGIDO: inclui busca)
   const limparFiltros = () => {
     setPrecoMin('');
     setPrecoMax('');
     setFabricanteSelecionado('');
     setMarcaSelecionada('');
     setCategoriaSelecionada('');
-    setTextoBusca(''); // ✅ Limpa busca também
+    setTextoBusca(''); 
     buscar({});
   };
 
-  // Renderizar dropdown
   const renderDropdown = (
     titulo: string,
     opcoes: FiltroOpcao[],
@@ -217,9 +206,9 @@ export default function ListProdutosScreen() {
     router.push(`/produto/${produtoId}` as any);
   };
 
-  // Função para adicionar produto ao carrinho
+  
   const handleAdicionarCarrinho = async (produto: Produto, event: any) => {
-    // Impedir que o evento de clique abra a página de detalhes
+    
     event.stopPropagation();
     
     try {
@@ -229,13 +218,18 @@ export default function ListProdutosScreen() {
     }
   };
 
-  // Renderizar item do produto em formato mobile
   const renderProduto = ({ item }: { item: Produto }) => (
     <TouchableOpacity 
       style={styles.mobileProdutoCard}
       onPress={() => navegarParaDetalhes(item.id)}
       activeOpacity={0.7}
     >
+      {/* Mostrar overlay esgotado se estoque_atual <= 0 */}
+      {((item as any).estoque_atual !== undefined && (item as any).estoque_atual <= 0) && (
+        <View style={styles.soldOutOverlay} pointerEvents="none">
+          <Text style={styles.soldOutText}>Esgotado</Text>
+        </View>
+      )}
       {/* Badge de desconto - apenas para produtos em destaque */}
       {item.destaque && (
         <View style={styles.mobileDescontoBadge}>
@@ -249,11 +243,10 @@ export default function ListProdutosScreen() {
           source={{ uri: item.imagem_principal || 'https://via.placeholder.com/120x120/48C9B0/FFFFFF?text=Produto' }}
           style={styles.mobileProdutoImagem}
           resizeMode="contain"
-          onLoad={() => console.log('✅ LISTA: Imagem carregada:', item.nome)}
+          onLoad={() => { /* imagem carregada */ }}
           onError={(error) => {
-            console.log('❌ LISTA: Erro ao carregar imagem:', item.nome);
-            console.log('❌ LISTA: URL da imagem:', item.imagem_principal);
-            console.log('❌ LISTA: Detalhes do erro:', error.nativeEvent);
+            /* evitar logs ruidosos em produção; manter apenas warning */
+            console.warn('Erro ao carregar imagem de produto:', item.id);
           }}
         />
       </View>
@@ -275,11 +268,12 @@ export default function ListProdutosScreen() {
         
         {/* Botão comprar */}
         <TouchableOpacity 
-          style={styles.mobileBotaoComprar}
+          style={[styles.mobileBotaoComprar, ((item as any).estoque_atual !== undefined && (item as any).estoque_atual <= 0) ? { backgroundColor: '#9CA3AF' } : null]}
           onPress={(event) => handleAdicionarCarrinho(item, event)}
+          disabled={((item as any).estoque_atual !== undefined && (item as any).estoque_atual <= 0)}
         >
           <Ionicons name="cart" size={16} color="#fff" style={{ marginRight: 4 }} />
-          <Text style={styles.mobileBotaoComprarTexto}>Comprar</Text>
+          <Text style={styles.mobileBotaoComprarTexto}>{((item as any).estoque_atual !== undefined && (item as any).estoque_atual <= 0) ? 'Esgotado' : 'Comprar'}</Text>
         </TouchableOpacity>
       </View>
     </TouchableOpacity>
@@ -351,6 +345,10 @@ export default function ListProdutosScreen() {
       ) : error ? (
         <View style={styles.mobileErrorContainer}>
           <Text style={styles.mobileErrorTexto}>Erro: {error}</Text>
+        </View>
+      ) : produtos.length === 0 ? (
+        <View style={styles.mobileErrorContainer}>
+          <Text style={styles.mobileErrorTexto}>Nenhum produto encontrado. Tente ajustar os filtros ou a busca.</Text>
         </View>
       ) : (
         <FlatList

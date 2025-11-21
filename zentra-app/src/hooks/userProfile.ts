@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useUser } from '../contexts/UserContext';
 import { useAuth } from '../contexts/AuthContext';
 
-// Hook personalizado para criar perfil de usuário
 export const useCreateProfile = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -16,7 +15,7 @@ export const useCreateProfile = () => {
     telefone: string, 
     dataNascimento: string
   ) => {
-    // Validação básica
+    
     if (!user?.id) {
       setError('Usuário não autenticado');
       return false;
@@ -27,7 +26,7 @@ export const useCreateProfile = () => {
       return false;
     }
 
-    // Validação de idade (16+ anos)
+  
     const validateAge = (birthDate: string) => {
       const today = new Date();
       const birth = new Date(birthDate);
@@ -46,7 +45,7 @@ export const useCreateProfile = () => {
       return false;
     }
 
-    // Validação básica de CPF (formato)
+   
     const validateCPF = (cpf: string) => {
       const cleanCPF = cpf.replace(/[^\d]/g, '');
       return cleanCPF.length === 11 && !/^(\d)\1{10}$/.test(cleanCPF);
@@ -64,7 +63,7 @@ export const useCreateProfile = () => {
       const sucesso = await criarPerfil({
         auth_id: user.id,
         nome,
-        cpf: cpf.replace(/[^\d]/g, ''), // Remove formatação do CPF
+        cpf: cpf.replace(/[^\d]/g, ''), 
         telefone,
         dataNascimento
       });

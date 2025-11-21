@@ -1,7 +1,6 @@
 import { useState, useCallback } from 'react';
 import { enderecoService, EnderecoData } from '../services/enderecoService';
-import { useEnderecoContext } from '../contexts/enderecoContext';
-import { useAuth } from '../contexts/AuthContext';
+import { useEnderecoContext, Endereco } from '../contexts/enderecoContext';
 
 
 export interface CreateEnderecoData {
@@ -33,10 +32,7 @@ export interface EnderecoFormData {
 }
 
 
-/**
- * Hook principal para gerenciar endereços do usuário
- * Use em telas de perfil, checkout, cadastro de endereços
- */
+
 export function useEndereco() {
   const {
     enderecos,
@@ -54,25 +50,25 @@ export function useEndereco() {
   } = useEnderecoContext();
 
   return {
-    // Estado
+   
     enderecos,
     enderecoPrincipal,
     loading,
     error,
     
-    // Ações
+
     criar: criarEndereco,
     buscar: buscarEnderecos,
     atualizar: atualizarEndereco,
     remover: removerEndereco,
     definirPrincipal: definirEnderecoPrincipal,
     
-    // Utilitários
+   
     limparErro,
     recarregar: recarregarEnderecos,
     validar: validarEndereco,
     
-    // Propriedades derivadas
+  
     temEnderecos: enderecos.length > 0,
     quantidadeEnderecos: enderecos.length,
     enderecosResidenciais: enderecos.filter(e => e.tipo === 'residencial'),
@@ -81,10 +77,7 @@ export function useEndereco() {
 }
 
 
-/**
- * Hook especializado para criar novo endereço
- * Use em telas de cadastro de endereço
- */
+
 export function useCriarEndereco() {
   const { criarEndereco, loading, error, limparErro } = useEnderecoContext();
   const [formData, setFormData] = useState<EnderecoFormData>({
@@ -130,18 +123,18 @@ export function useCriarEndereco() {
   }, [criarEndereco, formData, limparFormulario]);
 
   return {
-    // Estado do formulário
+   
     formData,
     loading,
     error,
     
-    // Ações
+ 
     atualizarCampo,
     limparFormulario,
     criar,
     limparErro,
     
-    // Validação
+    
     podeSubmeter: formData.cep.length === 8 && 
                   formData.logradouro.trim() !== '' && 
                   formData.bairro.trim() !== '' && 
@@ -151,10 +144,7 @@ export function useCriarEndereco() {
 }
 
 
-/**
- * Hook para buscar endereço por CEP
- * Use em formulários de endereço
- */
+
 export function useBuscarCEP() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -185,69 +175,60 @@ export function useBuscarCEP() {
   };
 }
 
-
-/**
- * Hook especializado para fluxo de checkout
- * Use em telas de pagamento e finalização de compra
- */
 export function useEnderecoCheckout() {
   const { enderecoPrincipal, enderecos, loading } = useEnderecoContext();
   const [enderecoSelecionado, setEnderecoSelecionado] = useState<string | null>(null);
 
-  // Endereço para entrega (selecionado ou principal)
+ 
   const enderecoEntrega = enderecoSelecionado 
     ? enderecos.find(e => e.id === enderecoSelecionado) 
     : enderecoPrincipal;
 
   return {
-    // Estado
+ 
     enderecoPrincipal,
     enderecos,
     enderecoEntrega,
     enderecoSelecionado,
     loading,
     
-    // Ações
+
     selecionarEndereco: setEnderecoSelecionado,
     
-    // Validações
+ 
     temEnderecoEntrega: !!enderecoEntrega,
     podeFinalizarCompra: !!enderecoEntrega && !loading,
     
-    // Dados formatados
+    
     enderecoFormatado: enderecoEntrega ? formatarEndereco(enderecoEntrega) : '',
     
-    // Lista para seleção
+  
     enderecosDisponiveis: enderecos.map(endereco => ({
-      id: endereco.id!,
+      id: endereco.id ?? '',
       label: `${endereco.tipo} - ${endereco.logradouro}, ${endereco.numero}`,
       completo: formatarEndereco(endereco),
-      principal: endereco.principal,
+      principal: !!endereco.principal,
     })),
   };
 }
 
 
-/**
- * Formatar endereço completo
- */
-export function formatarEndereco(endereco: any): string {
-  const partes = [
-    endereco.logradouro,
-    endereco.numero,
-    endereco.complemento && endereco.complemento.trim() !== '' ? endereco.complemento : null,
-    endereco.bairro,
-    endereco.cidade,
-    endereco.estado,
-    endereco.cep
-  ].filter(Boolean);
-  
+
+export function formatarEndereco(endereco: Endereco): string {
+  if (!endereco) return '';
+
+  const partes: string[] = [];
+  if (endereco.logradouro) partes.push(endereco.logradouro);
+  if (endereco.numero) partes.push(String(endereco.numero));
+  if (endereco.complemento && endereco.complemento.trim() !== '') partes.push(endereco.complemento.trim());
+  if (endereco.bairro) partes.push(endereco.bairro);
+  if (endereco.cidade) partes.push(endereco.cidade);
+  if (endereco.estado) partes.push(endereco.estado);
+  if (endereco.cep) partes.push(endereco.cep);
+
   return partes.join(', ');
 }
 
-/**
- * Formatar CEP
- */
 export function formatarCEP(cep: string): string {
   const cepLimpo = cep.replace(/[^\d]/g, '');
   if (cepLimpo.length === 8) {
@@ -256,17 +237,12 @@ export function formatarCEP(cep: string): string {
   return cepLimpo;
 }
 
-/**
- * Validar CEP
- */
 export function validarCEP(cep: string): boolean {
   const cepLimpo = cep.replace(/[^\d]/g, '');
   return cepLimpo.length === 8;
 }
 
-/**
- * Obter texto do tipo de endereço
- */
+
 export function obterTextoTipo(tipo: string): string {
   const tipos: Record<string, string> = {
     'residencial': 'Residencial',
@@ -280,10 +256,7 @@ export function obterTextoTipo(tipo: string): string {
 
 
 
-/**
- * Hook para estatísticas e relatórios de endereços
- * Use em telas de perfil ou dashboards
- */
+
 export function useEstatisticasEndereco() {
   const { enderecos } = useEnderecoContext();
 

@@ -21,7 +21,7 @@ export function useHistoricoPedidos() {
       setLoading(true);
       setError(null);
 
-      // Verificar se usuário está logado
+    
       if (!user?.id) {
         setPedidos([]);
         return;
@@ -34,9 +34,9 @@ export function useHistoricoPedidos() {
 
       setPedidos(resultado);
     } catch (err) {
-      console.error('❌ useHistoricoPedidos - erro ao buscar pedidos:', err);
+      console.error('useHistoricoPedidos - erro ao buscar pedidos:', err);
       setError('Erro ao carregar histórico');
-      setPedidos([]); // Limpar pedidos em caso de erro
+      setPedidos([]); 
     } finally {
       setLoading(false);
     }
@@ -69,13 +69,11 @@ export function usePedidoDetalhes(pedidoId: number | null) {
       setLoading(true);
       setError(null);
 
-      // Preferir buscar por ID direto (compatível com Supabase)
       if (buscarPedidoPorIdService) {
         const p = await buscarPedidoPorIdService(id);
         setPedido(p);
         if (!p) setError('Pedido não encontrado');
       } else {
-        // Fallback para buscarPedidos - usar UUID mock
         const todos = await buscarPedidosService({ usuario_id: "11111111-1111-1111-1111-111111111111" });
         const found = todos.find(x => x.id === id) || null;
         setPedido(found);
@@ -103,30 +101,33 @@ export function usePedidoDetalhes(pedidoId: number | null) {
 
 
 export function formatarStatusPedido(pedido: Pedido): { texto: string; cor: string; icone: string } {
-  // 🎯 DEBUG - Vamos ver o que está chegando
-  console.log('🔍 DEBUG formatarStatusPedido - Pedido:', pedido.codigo_pedido);
-  console.log('🔍 DEBUG formatarStatusPedido - Pagamentos:', pedido.pagamentos);
+  // debug logs removed
   
-  // 🎯 PRIORIZAR STATUS DO PAGAMENTO (se existir)
-  // Acessar como any porque a interface pode não estar sincronizada com a tabela real
-  const pagamentoAtivo = pedido.pagamentos?.find((p: any) => p.status === 'approved') || pedido.pagamentos?.[0];
+
   
+  const pagamentoAtivo = pedido.pagamentos && pedido.pagamentos.length > 0 ? pedido.pagamentos[0] : null;
   if (pagamentoAtivo) {
-    console.log('🔍 DEBUG - Pagamento ativo encontrado:', pagamentoAtivo);
-    const statusPagamentoMap: Record<string, { texto: string; cor: string; icone: string }> = {
-      'pending': { texto: 'Pagamento Pendente', cor: '#f39c12', icone: 'time-outline' },
-      'approved': { texto: 'Pagamento Aprovado', cor: '#27ae60', icone: 'checkmark-circle-outline' },
-      'rejected': { texto: 'Pagamento Recusado', cor: '#e74c3c', icone: 'close-circle-outline' },
-      'cancelled': { texto: 'Pagamento Cancelado', cor: '#e74c3c', icone: 'close-circle-outline' },
-    };
-    
-    const statusFormatado = statusPagamentoMap[(pagamentoAtivo as any).status];
-    if (statusFormatado) {
-      return statusFormatado;
+    const rawStatus = String((pagamentoAtivo as any).status || '').toLowerCase();
+    const isApproved = rawStatus.includes('aprov') || rawStatus === 'approved' || rawStatus === 'approved';
+    const isPending = rawStatus.includes('pend') || rawStatus === 'pending';
+
+    if (isApproved) {
+      return { texto: 'Pagamento Aprovado', cor: '#27ae60', icone: 'checkmark-circle-outline' };
+    }
+
+    if (isPending) {
+      return { texto: 'Pagamento Pendente', cor: '#f39c12', icone: 'time-outline' };
+    }
+  
+    if (rawStatus.includes('reje') || rawStatus === 'rejected') {
+      return { texto: 'Pagamento Recusado', cor: '#e74c3c', icone: 'close-circle-outline' };
+    }
+    if (rawStatus.includes('cancel') || rawStatus === 'cancelled') {
+      return { texto: 'Pagamento Cancelado', cor: '#e74c3c', icone: 'close-circle-outline' };
     }
   }
 
-  // ✅ FALLBACK: Status do pedido (caso não tenha pagamento)
+
   const statusPedidoMap: Record<string, { texto: string; cor: string; icone: string }> = {
     CRIADO: { texto: 'Processando', cor: '#f39c12', icone: 'sync-outline' },
     PAGO: { texto: 'Pagamento Aprovado', cor: '#3498db', icone: 'card-outline' },

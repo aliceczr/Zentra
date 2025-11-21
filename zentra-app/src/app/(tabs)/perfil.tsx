@@ -18,10 +18,6 @@ import { useHistoricoPedidos } from '../../hooks/hooksHistorico';
 import EditarPerfilModal from '../../components/EditarPerfilModal';
 import EditarEnderecoModal from '../../components/EditarEnderecoModal';
 
-// ============================================================================
-// 👤 PÁGINA PRINCIPAL DO PERFIL DO USUÁRIO
-// ============================================================================
-
 export default function PerfilScreen() {
   const router = useRouter();
   const { user, signOut } = useAuth();
@@ -33,9 +29,6 @@ export default function PerfilScreen() {
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [showEditAddress, setShowEditAddress] = useState(false);
 
-  // ============================================================================
-  // 🚪 FUNÇÃO DE LOGOUT
-  // ============================================================================
   const handleLogout = () => {
     Alert.alert(
       'Sair da Conta',
@@ -58,9 +51,7 @@ export default function PerfilScreen() {
     );
   };
 
-  // ============================================================================
-  // 🎨 FORMATAÇÃO DE DADOS
-  // ============================================================================
+
   const formatarCPF = (cpf: string) => {
     if (!cpf) return 'Não informado';
     return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
@@ -81,9 +72,6 @@ export default function PerfilScreen() {
     return `${endereco.cidade}, ${endereco.estado} - ${endereco.cep}`;
   };
 
-  // ============================================================================
-  // 📅 FORMATAÇÃO DE DATA
-  // ============================================================================
   const formatarDataCadastro = () => {
     if (!user?.created_at) return 'Recente';
     try {
@@ -97,9 +85,6 @@ export default function PerfilScreen() {
     }
   };
 
-  // ============================================================================
-  // 🔄 LOADING STATE
-  // ============================================================================
   if (loadingProfile) {
     return (
       <SafeAreaView style={styles.container}>
@@ -115,9 +100,6 @@ export default function PerfilScreen() {
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         
-        {/* ============================================================================ */}
-        {/* 👤 HEADER COM DADOS DO USUÁRIO */}
-        {/* ============================================================================ */}
         <View style={styles.header}>
           <View style={styles.avatarContainer}>
             <View style={styles.avatar}>
@@ -137,7 +119,7 @@ export default function PerfilScreen() {
         </View>
 
         {/* ============================================================================ */}
-        {/* 📄 SEÇÃO - DADOS PESSOAIS */}
+        {/*  SEÇÃO  DADOS PESSOAIS */}
         {/* ============================================================================ */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
@@ -201,7 +183,7 @@ export default function PerfilScreen() {
         </View>
 
         {/* ============================================================================ */}
-        {/* 🏠 SEÇÃO - MEU ENDEREÇO */}
+        {/*  SEÇÃO  ENDEREÇO */}
         {/* ============================================================================ */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
@@ -235,7 +217,7 @@ export default function PerfilScreen() {
         </View>
 
         {/* ============================================================================ */}
-        {/* 📋 SEÇÃO - HISTÓRICO DE COMPRAS */}
+        {/* SEÇÃO  HISTÓRICO DE COMPRAS */}
         {/* ============================================================================ */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
@@ -261,9 +243,6 @@ export default function PerfilScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* ============================================================================ */}
-        {/* 🚪 SEÇÃO - SAIR DA CONTA */}
-        {/* ============================================================================ */}
         <View style={styles.section}>
           <TouchableOpacity 
             style={styles.logoutButton}
@@ -274,37 +253,30 @@ export default function PerfilScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Espaçamento final */}
+    
         <View style={styles.bottomSpacing} />
       </ScrollView>
 
-      {/* TODO: Modais serão implementados nas próximas etapas */}
-      {/* Modal Editar Perfil */}
       <EditarPerfilModal
         visible={showEditProfile}
         onClose={() => setShowEditProfile(false)}
         onSuccess={() => {
-          // Dados serão atualizados automaticamente via context
-          console.log('✅ Perfil atualizado com sucesso!');
+          
         }}
       />
       
-      {/* Modal Editar Endereço */}
       <EditarEnderecoModal
         visible={showEditAddress}
         onClose={() => setShowEditAddress(false)}
         onSuccess={() => {
-          // Dados serão atualizados automaticamente via context
-          console.log('✅ Endereço atualizado com sucesso!');
+        
         }}
       />
     </SafeAreaView>
   );
 }
 
-// ============================================================================
-// 🎨 ESTILOS
-// ============================================================================
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,

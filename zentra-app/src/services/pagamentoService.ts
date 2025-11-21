@@ -5,26 +5,15 @@ export type StatusPagamento = 'PENDENTE' | 'PROCESSANDO' | 'APROVADO' | 'RECUSAD
 export type TipoMetodo = 'CARTAO_CREDITO' | 'CARTAO_DEBITO' | 'PIX';
 
 export interface Pagamento {
-  id: number;
+  id: string; // uuid
   pedido_id: number;
-  metodo_pagamento: MetodoPagamento;
-  status_pagamento: StatusPagamento;
-  valor_pago: number;
-  parcelas: number;
-  valor_parcela?: number;
-  taxa_juros: number;
-  codigo_transacao?: string;
-  gateway_pagamento?: string;
-  dados_pagamento?: any;
-  data_pagamento?: string;
-  data_confirmacao?: string;
-  criado_em: string;
-  atualizado_em: string;
-  // Campos Stripe (quando implementado)
-  stripe_payment_intent_id?: string;
-  stripe_charge_id?: string;
-  stripe_customer_id?: string;
-  webhook_event_id?: string;
+  preference_id?: string | null;
+  payment_id?: string | null;
+  status: string;
+  status_detail?: string | null;
+  valor_pago?: number | null;
+  data_aprovacao?: string | null;
+  created_at: string;
 }
 
 export interface MetodoPagamentoUsuario {
@@ -39,119 +28,9 @@ export interface MetodoPagamentoUsuario {
   principal: boolean;
   ativo: boolean;
   dados_criptografados?: string;
-  criado_em: string;
-  atualizado_em: string;
-  // Campos Stripe (quando implementado)
+  created_at: string;
   stripe_payment_method_id?: string;
   stripe_customer_id?: string;
-}
-
-// ================================
-// DADOS MOCK PARA TESTES
-// ================================
-
-const mockPagamentos: Pagamento[] = [
-  {
-    id: 1,
-    pedido_id: 1,
-    metodo_pagamento: 'CARTAO_CREDITO',
-    status_pagamento: 'APROVADO',
-    valor_pago: 89.90,
-    parcelas: 2,
-    valor_parcela: 44.95,
-    taxa_juros: 0,
-    codigo_transacao: 'TXN001ABC123',
-    gateway_pagamento: 'STRIPE',
-    dados_pagamento: {
-      cartao_bandeira: 'Visa',
-      cartao_final: '4242'
-    },
-    data_pagamento: '2024-01-15T10:30:00Z',
-    data_confirmacao: '2024-01-15T10:32:00Z',
-    criado_em: '2024-01-15T10:30:00Z',
-    atualizado_em: '2024-01-15T10:32:00Z',
-    stripe_payment_intent_id: 'pi_mock_123456789'
-  },
-  {
-    id: 2,
-    pedido_id: 2,
-    metodo_pagamento: 'PIX',
-    status_pagamento: 'APROVADO',
-    valor_pago: 45.50,
-    parcelas: 1,
-    valor_parcela: 45.50,
-    taxa_juros: 0,
-    codigo_transacao: 'PIX002XYZ789',
-    gateway_pagamento: 'STRIPE',
-    data_pagamento: '2024-01-16T14:15:00Z',
-    data_confirmacao: '2024-01-16T14:15:30Z',
-    criado_em: '2024-01-16T14:15:00Z',
-    atualizado_em: '2024-01-16T14:15:30Z',
-  },
-  {
-    id: 3,
-    pedido_id: 3,
-    metodo_pagamento: 'CARTAO_DEBITO',
-    status_pagamento: 'PENDENTE',
-    valor_pago: 125.80,
-    parcelas: 1,
-    valor_parcela: 125.80,
-    taxa_juros: 0,
-    codigo_transacao: 'TXN003DEF456',
-    gateway_pagamento: 'STRIPE',
-    data_pagamento: '2024-01-17T09:45:00Z',
-    criado_em: '2024-01-17T09:45:00Z',
-    atualizado_em: '2024-01-17T09:45:00Z',
-  }
-];
-
-const mockMetodosPagamento: MetodoPagamentoUsuario[] = [
-  {
-    id: 1,
-    usuario_id: 1,
-    tipo: 'CARTAO_CREDITO',
-    bandeira: 'Visa',
-    ultimos_digitos: '4242',
-    nome_titular: 'João Silva',
-    validade: '12/2028',
-    cpf_titular: '123.456.789-00',
-    principal: true,
-    ativo: true,
-    criado_em: '2024-01-10T10:00:00Z',
-    atualizado_em: '2024-01-10T10:00:00Z',
-    stripe_payment_method_id: 'pm_mock_visa4242'
-  },
-  {
-    id: 2,
-    usuario_id: 1,
-    tipo: 'PIX',
-    principal: false,
-    ativo: true,
-    criado_em: '2024-01-10T10:05:00Z',
-    atualizado_em: '2024-01-10T10:05:00Z',
-  }
-];
-
-export interface CriarPagamento {
-  pedido_id: number;
-  metodo_pagamento: MetodoPagamento;
-  valor_pago: number;
-  parcelas?: number;
-  codigo_transacao?: string;
-  gateway_pagamento?: string;
-  dados_pagamento?: any;
-  stripe_payment_intent_id?: string;
-  stripe_customer_id?: string;
-}
-
-export interface AtualizarPagamento {
-  status_pagamento?: StatusPagamento;
-  codigo_transacao?: string;
-  data_pagamento?: string;
-  data_confirmacao?: string;
-  stripe_charge_id?: string;
-  webhook_event_id?: string;
-  dados_pagamento?: any;
 }
 
 export interface FiltrosPagamento {
@@ -165,157 +44,126 @@ export interface FiltrosPagamento {
   valor_max?: number;
 }
 
-
-class MockPagamentoService {
-  private pagamentos: Pagamento[] = [...mockPagamentos];
-  private metodosPagamento: MetodoPagamentoUsuario[] = [...mockMetodosPagamento];
-  private nextId = 4;
-
-  // CRUD BÁSICO - PAGAMENTOS
-  async criar(dados: CriarPagamento): Promise<Pagamento> {
-    await new Promise(resolve => setTimeout(resolve, 300));
-
-    const novoPagamento: Pagamento = {
-      id: this.nextId++,
-      ...dados,
-      parcelas: dados.parcelas || 1,
-      status_pagamento: 'PENDENTE',
-      taxa_juros: 0.00,
-      valor_parcela: dados.parcelas && dados.parcelas > 1 
-        ? dados.valor_pago / dados.parcelas 
-        : dados.valor_pago,
-      criado_em: new Date().toISOString(),
-      atualizado_em: new Date().toISOString(),
-    };
-
-    this.pagamentos.push(novoPagamento);
-    return novoPagamento;
-  }
-
-  async buscarPorId(id: number): Promise<Pagamento | null> {
-    await new Promise(resolve => setTimeout(resolve, 200));
-    return this.pagamentos.find(p => p.id === id) || null;
-  }
-
-  async buscar(filtros: FiltrosPagamento = {}): Promise<Pagamento[]> {
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
-    let resultado = [...this.pagamentos];
-
-    if (filtros.usuario_id) {
-      // Para mock, assumimos que pedido_id 1,2,3 = usuario_id 1
-      const pedidosUsuario = filtros.usuario_id === 1 ? [1, 2, 3] : [];
-      resultado = resultado.filter(p => pedidosUsuario.includes(p.pedido_id));
-    }
-
-    if (filtros.pedido_id) {
-      resultado = resultado.filter(p => p.pedido_id === filtros.pedido_id);
-    }
-
-    if (filtros.status_pagamento) {
-      resultado = resultado.filter(p => p.status_pagamento === filtros.status_pagamento);
-    }
-
-    if (filtros.metodo_pagamento) {
-      resultado = resultado.filter(p => p.metodo_pagamento === filtros.metodo_pagamento);
-    }
-
-    if (filtros.valor_min) {
-      resultado = resultado.filter(p => p.valor_pago >= filtros.valor_min!);
-    }
-
-    if (filtros.valor_max) {
-      resultado = resultado.filter(p => p.valor_pago <= filtros.valor_max!);
-    }
-
-    return resultado.sort((a, b) => new Date(b.criado_em).getTime() - new Date(a.criado_em).getTime());
-  }
-
-  async atualizar(id: number, dados: AtualizarPagamento): Promise<Pagamento> {
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
-    const index = this.pagamentos.findIndex(p => p.id === id);
-    if (index === -1) {
-      throw new Error('Pagamento não encontrado');
-    }
-
-    this.pagamentos[index] = {
-      ...this.pagamentos[index],
-      ...dados,
-      atualizado_em: new Date().toISOString(),
-    };
-
-    return this.pagamentos[index];
-  }
-
-  // CRUD BÁSICO - MÉTODOS DE PAGAMENTO
-  async buscarMetodosUsuario(usuarioId: number): Promise<MetodoPagamentoUsuario[]> {
-    await new Promise(resolve => setTimeout(resolve, 200));
-    
-    return this.metodosPagamento
-      .filter(m => m.usuario_id === usuarioId && m.ativo)
-      .sort((a, b) => (b.principal ? 1 : 0) - (a.principal ? 1 : 0));
-  }
+export interface AtualizarPagamento {
+  status?: StatusPagamento;
+  status_detail?: string | null;
+  codigo_transacao?: string;
+  data_pagamento?: string;
+  data_aprovacao?: string;
+  stripe_charge_id?: string;
+  webhook_event_id?: string;
 }
 
-// ================================
-// IMPLEMENTAÇÃO SUPABASE (PRODUÇÃO)
-// ================================
-
-class SupabasePagamentoService {
-  // Implementação real com Supabase será feita posteriormente
-  
-  async criar(dados: CriarPagamento): Promise<Pagamento> {
-    throw new Error('Implementação Supabase ainda não disponível. Use modo mock para testes.');
-  }
-
-  async buscarPorId(id: number): Promise<Pagamento | null> {
-    throw new Error('Implementação Supabase ainda não disponível. Use modo mock para testes.');
-  }
-
-  async buscar(filtros: FiltrosPagamento = {}): Promise<Pagamento[]> {
-    throw new Error('Implementação Supabase ainda não disponível. Use modo mock para testes.');
-  }
-
-  async atualizar(id: number, dados: AtualizarPagamento): Promise<Pagamento> {
-    throw new Error('Implementação Supabase ainda não disponível. Use modo mock para testes.');
-  }
-
-  async buscarMetodosUsuario(usuarioId: number): Promise<MetodoPagamentoUsuario[]> {
-    throw new Error('Implementação Supabase ainda não disponível. Use modo mock para testes.');
-  }
+export interface CriarPagamento {
+  pedido_id: number;
+  preference_id?: string | null;
+  payment_id?: string | null;
+  status: string;
+  status_detail?: string | null;
+  valor_pago?: number | null;
+  data_aprovacao?: string | null;
+  created_at?: string;
 }
 
-// ================================
-// SELEÇÃO DE IMPLEMENTAÇÃO
-// ================================
 
-const USE_MOCK = true; // Altere para false quando quiser usar Supabase
-
-const implementacao = USE_MOCK ? new MockPagamentoService() : new SupabasePagamentoService();
-
-// ================================
-// FUNÇÕES PÚBLICAS DO SERVICE (APENAS CRUD)
-// ================================
-
-// PAGAMENTOS
 export async function criarPagamento(dados: CriarPagamento): Promise<Pagamento> {
-  return await implementacao.criar(dados);
+  const now = new Date().toISOString();
+
+  const pagamentoData: any = {
+    ...dados,
+    // Respeitar status enviado (útil para simular recusas em testes)
+    status: (dados as any).status ?? 'PENDENTE',
+    status_detail: (dados as any).status_detail || null,
+    valor_pago: dados.valor_pago ?? null,
+    // data_aprovacao apenas quando status for aprovado
+    data_aprovacao: (dados as any).data_aprovacao ?? (((dados as any).status === 'APROVADO' || (dados as any).status === 'PAGO') ? now : null),
+    created_at: now,
+  };
+
+  const { data, error } = await supabase.from('pagamentos').insert([pagamentoData]).select();
+  if (error) throw error;
+  const created = data[0];
+
+
+  try {
+    // Atualiza o pedido para PAGO somente quando o pagamento estiver aprovado
+    const pagoStatuses = ['APROVADO', 'PAGO', 'APPROVED'];
+    const pagamentoStatus = (pagamentoData.status || '').toString().toUpperCase();
+    if (pagoStatuses.includes(pagamentoStatus)) {
+      await supabase
+        .from('pedidos')
+        .update({ status: 'PAGO' })
+        .eq('id', dados.pedido_id);
+    }
+  } catch (err) {
+    console.error('Erro ao marcar pedido como PAGO (simulação):', err);
+  }
+
+  return {
+    ...created,
+    status_pagamento: (created as any)?.status,
+    metodo_pagamento: (created as any)?.status_detail,
+  } as unknown as Pagamento;
 }
 
 export async function buscarPagamentoPorId(id: number): Promise<Pagamento | null> {
-  return await implementacao.buscarPorId(id);
+  const { data, error } = await supabase.from('pagamentos').select('*').eq('id', id).single();
+  if (error) throw error;
+  if (!data) return null;
+  return {
+    ...data,
+    status_pagamento: (data as any).status,
+    metodo_pagamento: (data as any).status_detail,
+  } as unknown as Pagamento;
 }
 
-export async function buscarPagamentos(filtros?: FiltrosPagamento): Promise<Pagamento[]> {
-  return await implementacao.buscar(filtros);
+export async function buscarPagamentos(filtros: FiltrosPagamento = {}): Promise<Pagamento[]> {
+  let query = supabase.from('pagamentos').select('*');
+  if (filtros.usuario_id) query = query.eq('usuario_id', filtros.usuario_id);
+  if (filtros.pedido_id) query = query.eq('pedido_id', filtros.pedido_id);
+  if (filtros.status_pagamento) query = query.eq('status', filtros.status_pagamento);
+  if (filtros.metodo_pagamento) query = query.eq('status_detail', filtros.metodo_pagamento);
+  if (filtros.valor_min) query = query.gte('valor_pago', filtros.valor_min);
+  if (filtros.valor_max) query = query.lte('valor_pago', filtros.valor_max);
+  const { data, error } = await query;
+  if (error) throw error;
+  return (data || []).map((d: any) => ({
+    ...d,
+    status_pagamento: d.status,
+    metodo_pagamento: d.status_detail,
+  }));
 }
 
 export async function atualizarPagamento(id: number, dados: AtualizarPagamento): Promise<Pagamento> {
-  return await implementacao.atualizar(id, dados);
+  // map possible legacy key
+  const payload: any = { ...dados };
+  if ((payload as any).status_pagamento) {
+    payload.status = (payload as any).status_pagamento;
+    delete payload.status_pagamento;
+  }
+  const { data, error } = await supabase
+    .from('pagamentos')
+    .update(payload)
+    .eq('id', id)
+    .select()
+    .single();
+  if (error) throw error;
+  const updated = data as any;
+  return {
+    ...updated,
+    status_pagamento: updated.status,
+    metodo_pagamento: updated.status_detail,
+  } as unknown as Pagamento;
 }
 
-// MÉTODOS DE PAGAMENTO
+
 export async function buscarMetodosUsuario(usuarioId: number): Promise<MetodoPagamentoUsuario[]> {
-  return await implementacao.buscarMetodosUsuario(usuarioId);
+  const { data, error } = await supabase
+    .from('metodos_pagamento_usuario')
+    .select('*')
+    .eq('usuario_id', usuarioId)
+    .eq('ativo', true);
+  if (error) throw error;
+  return (data || []).sort((a, b) => (b.principal ? 1 : 0) - (a.principal ? 1 : 0));
 }
+

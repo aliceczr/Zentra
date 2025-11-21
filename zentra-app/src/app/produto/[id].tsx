@@ -4,6 +4,7 @@ import {
   Text,
   ScrollView,
   TouchableOpacity,
+  ActivityIndicator,
   Image,
   StyleSheet,
   Alert,
@@ -17,18 +18,21 @@ import { useAdicionarAoCarrinho, useCarrinhoContador } from '../../hooks/hooksCa
 export default function ProdutoDetalhes() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { produtos } = useProdutoContext();
+  const { produtos, carregarProdutos } = useProdutoContext();
   const { adicionarProduto, temNoCarrinho, loading } = useAdicionarAoCarrinho();
   const { quantidade: quantidadeCarrinho, temItens } = useCarrinhoContador();
   
-  // Estado para quantidade
   const [quantidade, setQuantidade] = useState(1);
 
-  // Buscar produto pelo ID
+
   const produto = produtos.find(p => p.id === Number(id));
   
-  // Verificar se produto está no carrinho
+  
   const jaNoCarrinho = produto ? temNoCarrinho(produto.id) : false;
+
+  const isSoldOut = produto ? (typeof (produto as any).estoque_atual === 'number' ? (produto as any).estoque_atual <= 0 : false) : false;
+
+  const [retrying, setRetrying] = useState(false);
 
   const handleVoltar = () => {
     router.back();
@@ -37,6 +41,17 @@ export default function ProdutoDetalhes() {
     if (!produto) return;
     
     try {
+      // Proteção: não permitir adicionar se sem estoque
+      if (isSoldOut) {
+        Alert.alert('Esgotado', 'Este produto está esgotado e não pode ser adicionado ao carrinho.');
+        return;
+      }
+      // Proteção: não permitir adicionar mais do que o estoque disponível
+      if (typeof (produto as any).estoque_atual === 'number' && quantidade > (produto as any).estoque_atual) {
+        Alert.alert('Quantidade inválida', `Apenas ${(produto as any).estoque_atual} unidade(s) disponíveis.`);
+        return;
+      }
+
       await adicionarProduto(produto, quantidade);
       
       Alert.alert(
@@ -56,13 +71,39 @@ export default function ProdutoDetalhes() {
   };
 
   if (!produto) {
+    const handleRetry = async () => {
+      setRetrying(true);
+      try {
+        await carregarProdutos();
+      } catch (e) {
+        
+      } finally {
+        setRetrying(false);
+      }
+    };
+
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>Produto não encontrado</Text>
-          <TouchableOpacity style={styles.voltarButton} onPress={handleVoltar}>
-            <Text style={styles.voltarButtonText}>Voltar</Text>
-          </TouchableOpacity>
+          <Text style={[styles.errorText, { color: '#666', marginBottom: 16, fontSize: 14 }]}>Este produto pode ter sido removido ou estar indisponível no momento.</Text>
+          <View style={{ flexDirection: 'row', gap: 12 }}>
+            <TouchableOpacity style={[styles.voltarButton, { marginRight: 8 }]} onPress={handleVoltar}>
+              <Text style={styles.voltarButtonText}>Voltar</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.voltarButton, { backgroundColor: '#2F9A8A', opacity: retrying ? 0.7 : 1 }]}
+              onPress={handleRetry}
+              disabled={retrying}
+            >
+              {retrying ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.voltarButtonText}>Atualizar</Text>
+              )}
+            </TouchableOpacity>
+          </View>
         </View>
       </SafeAreaView>
     );
@@ -133,23 +174,36 @@ export default function ProdutoDetalhes() {
                 
                 <TouchableOpacity 
                   style={styles.quantidadeBotao}
-                  onPress={() => setQuantidade(quantidade + 1)}
+                  onPress={() => {
+                    // Se houver informação de estoque, não ultrapassar
+                    if (typeof (produto as any).estoque_atual === 'number') {
+                      setQuantidade(q => Math.min((produto as any).estoque_atual as number, q + 1));
+                    } else {
+                      setQuantidade(q => q + 1);
+                    }
+                  }}
                 >
                   <Ionicons name="add" size={14} color="#133E4E" />
                 </TouchableOpacity>
               </View>
             </View>
             
-            <TouchableOpacity 
-              style={[styles.buyButton, loading && styles.buyButtonDisabled]} 
-              onPress={handleComprar}
-              disabled={loading}
-            >
-              <Ionicons name="cart" size={14} color="white" style={styles.buyButtonIcon} />
-              <Text style={styles.buyButtonText}>
-                {loading ? 'Adicionando...' : jaNoCarrinho ? 'Adicionar +' : 'Adicionar'}
-              </Text>
-            </TouchableOpacity>
+            {isSoldOut ? (
+              <View style={[styles.buyButton, styles.buyButtonDisabled, styles.soldOutButton]}>
+                <Text style={[styles.buyButtonText, styles.soldOutText]}>Esgotado</Text>
+              </View>
+            ) : (
+              <TouchableOpacity 
+                style={[styles.buyButton, loading && styles.buyButtonDisabled]} 
+                onPress={handleComprar}
+                disabled={loading}
+              >
+                <Ionicons name="cart" size={14} color="white" style={styles.buyButtonIcon} />
+                <Text style={styles.buyButtonText}>
+                  {loading ? 'Adicionando...' : jaNoCarrinho ? 'Adicionar +' : 'Adicionar'}
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
 
@@ -268,7 +322,7 @@ export default function ProdutoDetalhes() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#EAF6F6', // Fundo claro consistente
+    backgroundColor: '#EAF6F6',
   },
   errorContainer: {
     flex: 1,
@@ -283,7 +337,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   voltarButton: {
-    backgroundColor: '#48C9B0', // Verde turquesa consistente
+    backgroundColor: '#48C9B0', 
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 8,
@@ -300,7 +354,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
-    backgroundColor: '#fff', // Header branco para contraste
+    backgroundColor: '#fff', 
   },
   headerButton: {
     padding: 8,
@@ -310,7 +364,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     fontWeight: '600',
-    color: '#133E4E', // Azul escuro consistente
+    color: '#133E4E', 
     marginHorizontal: 12,
   },
   headerRight: {
@@ -320,7 +374,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 4,
     right: 4,
-    backgroundColor: '#48C9B0', // Verde turquesa consistente
+    backgroundColor: '#48C9B0', 
     borderRadius: 10,
     minWidth: 20,
     height: 20,
@@ -348,12 +402,12 @@ const styles = StyleSheet.create({
     padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
-    backgroundColor: '#fff', // Fundo branco para seções importantes
+    backgroundColor: '#fff', 
   },
   productName: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#133E4E', // Azul escuro consistente
+    color: '#133E4E', 
     marginBottom: 4,
   },
   productBrand: {
@@ -371,35 +425,35 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   price: {
-    fontSize: 22, // Reduzido de 24 para 22
+    fontSize: 22, 
     fontWeight: 'bold',
-    color: '#133E4E', // Azul escuro consistente
+    color: '#133E4E',
   },
   buyButton: {
-    backgroundColor: '#48C9B0', // Verde turquesa consistente
-    paddingHorizontal: 24, // Reduzido de 32 para 24
-    paddingVertical: 10, // Reduzido de 12 para 10
+    backgroundColor: '#48C9B0', 
+    paddingHorizontal: 24, 
+    paddingVertical: 10, 
     borderRadius: 8,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    alignSelf: 'stretch', // Faz o botão ocupar toda a largura
+    alignSelf: 'stretch', 
   },
   buyButtonText: {
     color: '#fff',
-    fontSize: 14, // Reduzido de 16 para 14
+    fontSize: 14, 
     fontWeight: '600',
   },
   section: {
     padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
-    backgroundColor: '#fff', // Fundo branco para seções
+    backgroundColor: '#fff', 
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#133E4E', // Azul escuro consistente
+    color: '#133E4E', 
     marginBottom: 12,
   },
   sectionText: {
@@ -427,19 +481,19 @@ const styles = StyleSheet.create({
   },
   caracteristicaValue: {
     fontSize: 14,
-    color: '#133E4E', // Azul escuro consistente
+    color: '#133E4E', 
     fontWeight: '500',
     textAlign: 'right',
     flex: 1,
   },
   warningText: {
     fontSize: 14,
-    color: '#e74c3c', // Vermelho para avisos (manter para contraste)
+    color: '#e74c3c', 
     marginBottom: 8,
   },
   infoText: {
     fontSize: 14,
-    color: '#48C9B0', // Verde turquesa consistente
+    color: '#48C9B0', 
     marginBottom: 8,
   },
   bulaContainer: {
@@ -452,12 +506,12 @@ const styles = StyleSheet.create({
   },
   bulaLabel: {
     fontSize: 16,
-    color: '#133E4E', // Azul escuro consistente
+    color: '#133E4E', 
     fontWeight: '500',
   },
   bulaLink: {
     fontSize: 16,
-    color: '#48C9B0', // Verde turquesa consistente
+    color: '#48C9B0', 
     fontWeight: '600',
     textDecorationLine: 'underline',
   },
@@ -466,7 +520,7 @@ const styles = StyleSheet.create({
   quantidadeContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8, // Espaçamento entre elementos
+    gap: 8, 
   },
   quantidadeLabel: {
     fontSize: 14,
@@ -475,8 +529,8 @@ const styles = StyleSheet.create({
     marginRight: 4,
   },
   quantidadeBotao: {
-    width: 28, // Reduzido de 32 para 28
-    height: 28, // Reduzido de 32 para 28
+    width: 28, 
+    height: 28, 
     borderRadius: 14,
     backgroundColor: '#f0f0f0',
     alignItems: 'center',
@@ -485,10 +539,10 @@ const styles = StyleSheet.create({
     borderColor: '#ddd',
   },
   quantidadeTexto: {
-    fontSize: 14, // Reduzido de 16 para 14
+    fontSize: 14, 
     fontWeight: 'bold',
     color: '#133E4E',
-    minWidth: 24, // Reduzido de 30 para 24
+    minWidth: 24, 
     textAlign: 'center',
   },
   
@@ -498,7 +552,21 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   buyButtonIcon: {
-    marginRight: 6, // Reduzido de 8 para 6
+    marginRight: 6, 
+  },
+  soldOutButton: {
+    backgroundColor: '#b0b0b0',
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'stretch',
+  },
+  soldOutText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
   },
   
   bottomSpacing: {

@@ -18,8 +18,10 @@ import {
   calcularTempoDecorrido,
   formatarTempoEntrega
 } from '../../hooks/hooksHistorico';
+import { atualizarPagamento } from '../../services/pagamentoService';
+import { atualizarPedido } from '../../services/pedidoService';
 
-// 🔧 Função auxiliar para status individual (usar só no timeline)
+
 function formatarStatusIndividual(status: StatusPedido): { texto: string; cor: string; icone: string } {
   const statusMap: Record<string, { texto: string; cor: string; icone: string }> = {
     CRIADO: { texto: 'Processando', cor: '#f39c12', icone: 'sync-outline' },
@@ -34,22 +36,35 @@ function formatarStatusIndividual(status: StatusPedido): { texto: string; cor: s
 import { formatarValor } from '../../hooks/hooksPagamento';
 import { Pedido, StatusPedido } from '../../services/pedidoService';
 
-// ============================================================================
-// 🕒 COMPONENTE TIMELINE DO STATUS
-// ============================================================================
+
 
 interface StatusTimelineProps {
   pedido: Pedido;
 }
 
 function StatusTimeline({ pedido }: StatusTimelineProps) {
-  // 🎯 VERIFICAR SE PAGAMENTO ESTÁ APROVADO
-  const pagamentoAprovado = pedido.pagamentos?.some((p: any) => p.status === 'approved');
-  
-  // 🎯 SE PAGAMENTO APROVADO = APENAS 1 ETAPA
+ 
+  const pagamentoAprovado = pedido.pagamentos?.some((p: any) => {
+    const s = String((p as any).status || '').toLowerCase();
+    return s.includes('aprov') || s === 'approved';
+  });
+
+
   if (pagamentoAprovado) {
     return (
       <View style={styles.timelineContainer}>
+        {/* Processando */}
+        <View style={styles.timelineItem}>
+          <View style={[styles.timelineIcon, { backgroundColor: '#27ae60' }]}>
+            <Ionicons name="sync-outline" size={20} color="#fff" />
+          </View>
+          <View style={styles.timelineContent}>
+            <Text style={styles.timelineTitle}>Processando</Text>
+            <Text style={styles.timelineData}>{formatarDataPedido(pedido.created_at)}</Text>
+          </View>
+        </View>
+
+        {/* Pagamento Aprovado */}
         <View style={styles.timelineItem}>
           <View style={[styles.timelineIcon, { backgroundColor: '#27ae60' }]}>
             <Ionicons name="checkmark-circle" size={20} color="#fff" />
@@ -57,7 +72,7 @@ function StatusTimeline({ pedido }: StatusTimelineProps) {
           <View style={styles.timelineContent}>
             <Text style={styles.timelineTitle}>Pagamento Aprovado</Text>
             <Text style={styles.timelineData}>
-              {formatarDataPedido(pedido.created_at)}
+              {formatarDataPedido(pedido.pagamentos[0]?.data_aprovacao || pedido.created_at)}
             </Text>
           </View>
         </View>
@@ -65,7 +80,6 @@ function StatusTimeline({ pedido }: StatusTimelineProps) {
     );
   }
 
-  // ✅ LÓGICA ORIGINAL PARA PEDIDOS SEM PAGAMENTO MP
   const statusSequencia: StatusPedido[] = ['CRIADO', 'PAGO', 'PREPARANDO', 'ENVIADO', 'ENTREGUE'];
   const statusAtualIndex = statusSequencia.indexOf(pedido.status);
   const isCancelado = pedido.status === 'CANCELADO';
@@ -97,8 +111,8 @@ function StatusTimeline({ pedido }: StatusTimelineProps) {
         
         let dataExibicao = '';
         if (status === 'CRIADO') dataExibicao = pedido.created_at;
-        else if (status === 'PAGO' && pedido.pagamentos[0]?.data_confirmacao) {
-          dataExibicao = pedido.pagamentos[0].data_confirmacao;
+        else if (status === 'PAGO' && pedido.pagamentos[0]?.data_aprovacao) {
+          dataExibicao = pedido.pagamentos[0].data_aprovacao;
         } else if (status === 'ENTREGUE' && pedido.data_entrega_real) {
           dataExibicao = pedido.data_entrega_real;
         } else if (isCompleted) {
@@ -154,9 +168,7 @@ function StatusTimeline({ pedido }: StatusTimelineProps) {
   );
 }
 
-// ============================================================================
-// 📋 COMPONENTE ITEM DO PEDIDO DETALHADO
-// ============================================================================
+
 
 interface ItemDetalhesProps {
   item: any; // ItemPedido do service
@@ -253,37 +265,35 @@ function ItemDetalhes({ item }: ItemDetalhesProps) {
   );
 }
 
-// ============================================================================
-// 💳 COMPONENTE INFORMAÇÕES DE PAGAMENTO
-// ============================================================================
 
 interface PagamentoInfoProps {
   pedido: Pedido;
 }
 
 function PagamentoInfo({ pedido }: PagamentoInfoProps) {
-  const pagamento = pedido.pagamentos[0]; // Assumindo um pagamento por pedido
+  const pagamento = pedido.pagamentos[0]; 
   
   if (!pagamento) return null;
 
-  // ✅ USAR CAMPOS REAIS DA TABELA PAGAMENTOS (MP)
-  const pagamentoData = pagamento as any; // Cast para acessar campos do MP
+
+  const pagamentoData = pagamento as any; 
   
-  const statusInfo = {
-    'pending': { cor: '#f39c12', texto: 'Pendente' },
-    'approved': { cor: '#27ae60', texto: 'Pagamento Aprovado' },
-    'rejected': { cor: '#e74c3c', texto: 'Recusado' },
-    'cancelled': { cor: '#95a5a6', texto: 'Cancelado' },
-  };
+  
+  const rawStatus = String(pagamentoData.status || '').toLowerCase();
+  const isApproved = rawStatus.includes('aprov') || rawStatus === 'approved';
+  const isPending = rawStatus.includes('pend') || rawStatus === 'pending';
 
-  const status = statusInfo[pagamentoData.status as keyof typeof statusInfo] || statusInfo['pending'];
+  const status = isApproved
+    ? { cor: '#27ae60', texto: 'Pagamento Aprovado', icone: 'checkmark-circle' }
+    : isPending
+    ? { cor: '#f39c12', texto: 'Pagamento Pendente', icone: 'time-outline' }
+    : { cor: '#95a5a6', texto: String(pagamentoData.status), icone: 'alert-circle-outline' };
 
-  // ✅ DETECTAR MÉTODO BASEADO NO PAYMENT_TYPE (se disponível)
   const detectarMetodo = () => {
     if (pagamentoData.payment_type === 'credit_card') return 'Cartão de Crédito';
     if (pagamentoData.payment_type === 'debit_card') return 'Cartão de Débito';
     if (pagamentoData.payment_type === 'account_money') return 'Saldo MP';
-    return null; // Não mostrar se não souber
+    return null; 
   };
 
   const metodoPagamento = detectarMetodo();
@@ -302,7 +312,8 @@ function PagamentoInfo({ pedido }: PagamentoInfoProps) {
       
       <View style={styles.pagamentoItem}>
         <Text style={styles.pagamentoLabel}>Status:</Text>
-        <View style={[styles.statusBadge, { backgroundColor: status.cor }]}>
+        <View style={[styles.statusBadge, { backgroundColor: status.cor, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10 }]}>
+          <Ionicons name={status.icone as any} size={14} color="#fff" style={{ marginRight: 8 }} />
           <Text style={styles.statusBadgeText}>{status.texto}</Text>
         </View>
       </View>
@@ -312,7 +323,7 @@ function PagamentoInfo({ pedido }: PagamentoInfoProps) {
         <Text style={styles.pagamentoValor}>{formatarValor(pagamentoData.valor_pago)}</Text>
       </View>
       
-      {/* ✅ REMOVER CAMPOS QUE NÃO EXISTEM NO MP */}
+    
       {pagamentoData.payment_id && (
         <View style={styles.pagamentoItem}>
           <Text style={styles.pagamentoLabel}>ID Pagamento:</Text>
@@ -332,9 +343,7 @@ function PagamentoInfo({ pedido }: PagamentoInfoProps) {
   );
 }
 
-// ============================================================================
-// 📱 COMPONENTE PRINCIPAL - DETALHES DO PEDIDO
-// ============================================================================
+
 
 export default function PedidoDetalhesScreen() {
   const router = useRouter();
@@ -352,9 +361,47 @@ export default function PedidoDetalhesScreen() {
         { 
           text: 'Sim, cancelar', 
           style: 'destructive',
-          onPress: () => {
-            // Implementar cancelamento
-            Alert.alert('Sucesso', 'Pedido cancelado com sucesso');
+          onPress: async () => {
+            if (!pedido) {
+              Alert.alert('Erro', 'Pedido não encontrado para cancelamento');
+              return;
+            }
+            try {
+              // Atualiza todos os pagamentos associados para CANCELADO
+              if (pedido.pagamentos && Array.isArray(pedido.pagamentos)) {
+                await Promise.all(pedido.pagamentos.map(async (p: any) => {
+                  try {
+                    await atualizarPagamento(p.id, { status: 'CANCELADO' });
+                  } catch (err) {
+                    console.warn('Falha ao atualizar pagamento', p.id, err);
+                  }
+                }));
+              }
+
+              // Atualiza o pedido para CANCELADO
+              await atualizarPedido(pedido.id, { status: 'CANCELADO' });
+
+              // Recarrega os dados localmente
+              recarregar();
+
+              // Navega de volta para o histórico e força recarregamento lá
+              Alert.alert('Sucesso', 'Pedido e pagamentos cancelados com sucesso', [
+                {
+                  text: 'OK',
+                  onPress: () => {
+                    try {
+                      router.replace('/historico' as any);
+                    } catch (e) {
+                      // fallback: apenas volta
+                      try { router.back(); } catch (_) {}
+                    }
+                  }
+                }
+              ]);
+            } catch (err) {
+              console.error('Erro ao cancelar pedido:', err);
+              Alert.alert('Erro', 'Não foi possível cancelar o pedido. Tente novamente.');
+            }
           }
         }
       ]
@@ -406,8 +453,23 @@ export default function PedidoDetalhesScreen() {
     );
   }
 
-  const podeSerCancelado = ['CRIADO', 'PAGO', 'PREPARANDO'].includes(pedido.status);
-  const statusInfo = formatarStatusPedido(pedido); // ✅ Passa pedido completo
+  // Detecta se existe pagamento aprovado (normalize strings)
+  const pagamentoAprovado = pedido.pagamentos?.some((p: any) => {
+    const s = String((p as any).status || '').toLowerCase();
+    return s.includes('aprov') || s === 'approved';
+  });
+
+  // Não permitir cancelamento se pagamento já aprovado
+  const podeSerCancelado = !pagamentoAprovado && ['CRIADO', 'PAGO', 'PREPARANDO'].includes(pedido.status);
+  // Mostrar prioridade do status de pagamento quando aplicável (ex.: pagamento pendente)
+  const pagamentoPendente = pedido.pagamentos?.some((p: any) => {
+    const s = String((p as any).status || '').toLowerCase();
+    return s.includes('pend') || s === 'pending';
+  });
+
+  const statusInfo = pagamentoPendente
+    ? { texto: 'Pagamento Pendente', cor: '#f39c12', icone: 'time-outline' }
+    : formatarStatusPedido(pedido); // ✅ Passa pedido completo
 
   return (
     <>
@@ -429,12 +491,11 @@ export default function PedidoDetalhesScreen() {
         <View style={styles.mainInfoContainer}>
           <View style={styles.pedidoHeader}>
             <Text style={styles.codigoPedido}>{pedido.codigo_pedido}</Text>
-            <View style={[styles.statusBadgeLarge, { backgroundColor: statusInfo.cor }]}>
-              <Ionicons name={statusInfo.icone as any} size={20} color="#fff" />
-              <Text style={styles.statusTextLarge}>{statusInfo.texto}</Text>
-            </View>
           </View>
-          
+
+          {/* Mostrar apenas o texto do status do pedido (sem tag ao lado) */}
+          <Text style={[styles.statusTextHeader, { color: statusInfo.cor }]}>{statusInfo.texto}</Text>
+
           <Text style={styles.dataPedido}>
             Realizado em {formatarDataPedido(pedido.created_at)}
           </Text>
@@ -498,7 +559,7 @@ export default function PedidoDetalhesScreen() {
 
         {/* Botões de Ação */}
         <View style={styles.acoesContainer}>
-          {podeSerCancelado && (
+          {!pagamentoAprovado && podeSerCancelado && (
             <TouchableOpacity 
               style={styles.botaoCancelar}
               onPress={handleCancelarPedido}
@@ -507,14 +568,24 @@ export default function PedidoDetalhesScreen() {
               <Text style={styles.botaoCancelarText}>Cancelar Pedido</Text>
             </TouchableOpacity>
           )}
-          
-          <TouchableOpacity 
-            style={styles.botaoRecomprar}
-            onPress={handleRecomprar}
-          >
-            <Ionicons name="refresh-circle-outline" size={20} color="#48C9B0" />
-            <Text style={styles.botaoRecomprarText}>Recomprar</Text>
-          </TouchableOpacity>
+
+          {pagamentoAprovado ? (
+            <TouchableOpacity
+              style={[styles.botaoRecomprar, { backgroundColor: '#27ae60', borderColor: '#27ae60' }]}
+              onPress={handleRecomprar}
+            >
+              <Ionicons name="refresh-circle-outline" size={20} color="#fff" />
+              <Text style={[styles.botaoRecomprarText, { color: '#fff' }]}>Recomprar</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity 
+              style={styles.botaoRecomprar}
+              onPress={handleRecomprar}
+            >
+              <Ionicons name="refresh-circle-outline" size={20} color="#48C9B0" />
+              <Text style={styles.botaoRecomprarText}>Recomprar</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -522,18 +593,16 @@ export default function PedidoDetalhesScreen() {
   );
 }
 
-// ============================================================================
-// 🎨 ESTILOS
-// ============================================================================
+
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8f9fa',
-    paddingTop: 0, // ✅ Remove espaçamento superior extra
+    paddingTop: 0,
   },
   
-  // Header
+
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -543,7 +612,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
-    paddingTop: 10, // ✅ Controla o espaçamento superior do header
+    paddingTop: 10, 
   },
   headerTitle: {
     fontSize: 18,
@@ -551,12 +620,11 @@ const styles = StyleSheet.create({
     color: '#333',
   },
 
-  // Content
   content: {
     flex: 1,
   },
 
-  // Main Info
+ 
   mainInfoContainer: {
     backgroundColor: '#fff',
     padding: 20,
@@ -572,6 +640,11 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#333',
+  },
+  statusTextHeader: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 8,
   },
   statusBadgeLarge: {
     flexDirection: 'row',

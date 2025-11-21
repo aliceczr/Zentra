@@ -5,12 +5,12 @@ import {
   CriarPagamento, 
   AtualizarPagamento, 
   FiltrosPagamentos,
-  criarPagamento,
   buscarPagamentoPorId,
   buscarPagamentos,
   atualizarPagamento,
   buscarMetodosUsuario
 } from '../services/pedidoService';
+import { criarPagamento } from '../services/pagamentoService';
 
 
 interface PagamentoState {
@@ -24,22 +24,20 @@ interface PagamentoState {
 }
 
 interface PagamentoActions {
-  // Pagamentos
+
   criarNovoPagamento: (dados: CriarPagamento) => Promise<Pagamento>;
   buscarPagamento: (id: number) => Promise<void>;
   listarPagamentos: (filtros?: FiltrosPagamentos) => Promise<void>;
   atualizarStatusPagamento: (id: number, dados: AtualizarPagamento) => Promise<void>;
-  
-  // Métodos de pagamento
+
   carregarMetodosUsuario: (usuarioId: string) => Promise<void>;
   definirMetodoPrincipal: (metodo: MetodoPagamentoUsuario) => void;
-  
-  // Filtros e Estado
+
   atualizarFiltros: (novosFiltros: Partial<FiltrosPagamentos>) => void;
   limparFiltros: () => void;
   limparErro: () => void;
   
-  // Utilitários
+  
   recarregarDados: (usuarioId?: string) => Promise<void>;
 }
 
@@ -64,7 +62,7 @@ interface PagamentoProviderProps {
 }
 
 export function PagamentoProvider({ children }: PagamentoProviderProps) {
-  // Estados locais
+
   const [pagamentos, setPagamentos] = useState<Pagamento[]>(initialState.pagamentos);
   const [pagamentoAtual, setPagamentoAtual] = useState<Pagamento | null>(initialState.pagamentoAtual);
   const [metodosUsuario, setMetodosUsuario] = useState<MetodoPagamentoUsuario[]>(initialState.metodosUsuario);
@@ -73,7 +71,6 @@ export function PagamentoProvider({ children }: PagamentoProviderProps) {
   const [error, setError] = useState<string | null>(initialState.error);
   const [filtros, setFiltros] = useState<FiltrosPagamentos>(initialState.filtros);
 
-  // Função utilitária para tratar erros
   const handleError = (error: any, operacao: string) => {
     const mensagem = error instanceof Error ? error.message : `Erro na ${operacao}`;
     setError(mensagem);
@@ -87,9 +84,8 @@ export function PagamentoProvider({ children }: PagamentoProviderProps) {
       setLoading(true);
       setError(null);
       
-      const novoPagamento = await criarPagamento(dados);
+  const novoPagamento = await criarPagamento(dados as any);
       
-      // Adicionar à lista local
       setPagamentos(prev => [novoPagamento, ...prev]);
       setPagamentoAtual(novoPagamento);
       
@@ -142,12 +138,12 @@ export function PagamentoProvider({ children }: PagamentoProviderProps) {
       
       const pagamentoAtualizado = await atualizarPagamento(id, dados);
       
-      // Atualizar na lista local
+     
       setPagamentos(prev => 
         prev.map(p => p.id === id ? pagamentoAtualizado : p)
       );
       
-      // Atualizar pagamento atual se for o mesmo
+   
       if (pagamentoAtual?.id === id) {
         setPagamentoAtual(pagamentoAtualizado);
       }
@@ -168,7 +164,7 @@ export function PagamentoProvider({ children }: PagamentoProviderProps) {
       const metodos = await buscarMetodosUsuario(usuarioId);
       setMetodosUsuario(metodos);
       
-      // Definir método principal
+      
       const principal = metodos.find(m => m.principal);
       setMetodoPrincipal(principal || null);
     } catch (error) {
@@ -181,7 +177,7 @@ export function PagamentoProvider({ children }: PagamentoProviderProps) {
   const definirMetodoPrincipal = (metodo: MetodoPagamentoUsuario): void => {
     setMetodoPrincipal(metodo);
     
-    // Atualizar lista marcando apenas este como principal
+    
     setMetodosUsuario(prev => 
       prev.map(m => ({
         ...m,
@@ -208,10 +204,10 @@ export function PagamentoProvider({ children }: PagamentoProviderProps) {
       setLoading(true);
       setError(null);
       
-      // Recarregar pagamentos
+  
       await listarPagamentos(filtros);
       
-      // Recarregar métodos se usuário foi fornecido
+      
       if (usuarioId) {
         await carregarMetodosUsuario(usuarioId);
       }
@@ -224,7 +220,7 @@ export function PagamentoProvider({ children }: PagamentoProviderProps) {
 
 
   const contextValue: PagamentoContextType = {
-    // Estado
+
     pagamentos,
     pagamentoAtual,
     metodosUsuario,
@@ -232,18 +228,17 @@ export function PagamentoProvider({ children }: PagamentoProviderProps) {
     loading,
     error,
     filtros,
-    
-    // Ações - Pagamentos
+
     criarNovoPagamento,
     buscarPagamento,
     listarPagamentos,
     atualizarStatusPagamento,
     
-    // Ações - Métodos
+   
     carregarMetodosUsuario,
     definirMetodoPrincipal,
     
-    // Ações - Filtros e Estado
+   
     atualizarFiltros,
     limparFiltros,
     limparErro,

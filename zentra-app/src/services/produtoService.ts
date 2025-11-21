@@ -82,7 +82,6 @@ export async function buscarProdutos(filtros?: FiltrosProduto): Promise<Produto[
       .eq('ativo', true)
       .order('created_at', { ascending: false });
 
-    // Aplicar filtros se fornecidos
     if (filtros) {
       if (filtros.categoria_id) {
         query = query.eq('categoria_id', filtros.categoria_id);
@@ -152,10 +151,10 @@ export interface FiltroOpcao {
   id: string;
   label: string;
   value: string;
-  count?: number; // Quantidade de produtos com essa opção
+  count?: number; 
 }
 
-// Buscar fabricantes únicos do banco
+
 export async function buscarFabricantes(): Promise<FiltroOpcao[]> {
   try {
     
@@ -167,11 +166,10 @@ export async function buscarFabricantes(): Promise<FiltroOpcao[]> {
       .not('fabricante', 'eq', '');
 
     if (error) {
-      console.error('❌ Erro ao buscar fabricantes:', error);
+      console.error('Erro ao buscar fabricantes:', error);
       return [{ id: 'todos', label: 'Todos os Fabricantes', value: '' }];
     }
 
-    // Contar ocorrências de cada fabricante
     const fabricantesCount: { [key: string]: number } = {};
     data.forEach(item => {
       if (item.fabricante) {
@@ -179,35 +177,30 @@ export async function buscarFabricantes(): Promise<FiltroOpcao[]> {
       }
     });
 
-    // Converter para formato de opções
     const fabricantesOpcoes: FiltroOpcao[] = [
       { id: 'todos', label: 'Todos os Fabricantes', value: '' }
     ];
+    const fabricantesLista: FiltroOpcao[] = Object.entries(fabricantesCount).map(([fabricante, count]) => ({
+      id: fabricante.toLowerCase().replace(/\s+/g, '-'),
+      label: `${fabricante} (${count})`,
+      value: fabricante,
+      count
+    }));
 
-    Object.entries(fabricantesCount).forEach(([fabricante, count]) => {
-      fabricantesOpcoes.push({
-        id: fabricante.toLowerCase().replace(/\s+/g, '-'),
-        label: `${fabricante} (${count})`,
-        value: fabricante,
-        count
-      });
-    });
+    fabricantesLista.sort((a, b) => a.value.localeCompare(b.value));
 
-    // Ordenar por nome
-    fabricantesOpcoes.slice(1).sort((a, b) => a.value.localeCompare(b.value));
-
-    
     return [
-      { id: 'todos', label: 'Todos os Fabricantes', value: '' }
+      { id: 'todos', label: 'Todos os Fabricantes', value: '' },
+      ...fabricantesLista,
     ];
 
   } catch (error) {
-    console.error('❌ Erro geral ao buscar fabricantes:', error);
+    console.error('Erro geral ao buscar fabricantes:', error);
     return [{ id: 'todos', label: 'Todos os Fabricantes', value: '' }];
   }
 }
 
-// Buscar marcas únicas do banco
+
 export async function buscarMarcas(): Promise<FiltroOpcao[]> {
   try {
     
@@ -219,11 +212,10 @@ export async function buscarMarcas(): Promise<FiltroOpcao[]> {
       .not('marca', 'eq', '');
 
     if (error) {
-      console.error('❌ Erro ao buscar marcas:', error);
+      console.error('Erro ao buscar marcas:', error);
       return [{ id: 'todas', label: 'Todas as Marcas', value: '' }];
     }
 
-    // Contar ocorrências de cada marca
     const marcasCount: { [key: string]: number } = {};
     data.forEach(item => {
       if (item.marca) {
@@ -231,31 +223,32 @@ export async function buscarMarcas(): Promise<FiltroOpcao[]> {
       }
     });
 
-    // Converter para formato de opções
+
     const marcasOpcoes: FiltroOpcao[] = [
       { id: 'todas', label: 'Todas as Marcas', value: '' }
     ];
 
-    Object.entries(marcasCount).forEach(([marca, count]) => {
-      marcasOpcoes.push({
-        id: marca.toLowerCase().replace(/\s+/g, '-'),
-        label: `${marca} (${count})`,
-        value: marca,
-        count
-      });
-    });
+    const marcasLista: FiltroOpcao[] = Object.entries(marcasCount).map(([marca, count]) => ({
+      id: marca.toLowerCase().replace(/\s+/g, '-'),
+      label: `${marca} (${count})`,
+      value: marca,
+      count
+    }));
 
-    // Ordenar por nome
-    marcasOpcoes.slice(1).sort((a, b) => a.value.localeCompare(b.value));
+    marcasLista.sort((a, b) => a.value.localeCompare(b.value));
 
-    return marcasOpcoes;
+    return [
+      { id: 'todas', label: 'Todas as Marcas', value: '' },
+      ...marcasLista,
+    ];
 
   } catch (error) {
+    console.error('Erro geral ao buscar marcas:', error);
     return [{ id: 'todas', label: 'Todas as Marcas', value: '' }];
   }
 }
 
-// Buscar categorias do banco 
+
 export async function buscarCategorias(): Promise<FiltroOpcao[]> {
   try {
     
@@ -265,7 +258,7 @@ export async function buscarCategorias(): Promise<FiltroOpcao[]> {
       .order('nome');
 
     if (error) {
-      console.error('❌ Erro ao buscar categorias:', error);
+      console.error('Erro ao buscar categorias:', error);
       return [{ id: 'todas', label: 'Todas as Categorias', value: '' }];
     }
 
@@ -284,7 +277,33 @@ export async function buscarCategorias(): Promise<FiltroOpcao[]> {
     return categoriasOpcoes;
 
   } catch (error) {
-    console.error('❌ Erro geral ao buscar categorias:', error);
+    console.error('Erro geral ao buscar categorias:', error);
     return [{ id: 'todas', label: 'Todas as Categorias', value: '' }];
+  }
+}
+
+
+export async function buscarPorIds(ids: number[]): Promise<Map<number, Produto>> {
+  try {
+    if (!ids || ids.length === 0) return new Map();
+
+    // Supabase supports `in` to fetch multiple ids in one query
+    const { data, error } = await supabase
+      .from('produtos')
+      .select('*')
+      .in('id', ids)
+      .eq('ativo', true);
+
+    if (error) {
+      console.error('Erro ao buscar produtos por IDs:', error);
+      return new Map();
+    }
+
+    const map = new Map<number, Produto>();
+    (data || []).forEach((p: Produto) => map.set(p.id, p));
+    return map;
+  } catch (error) {
+    console.error('Erro ao buscar produtos por IDs:', error);
+    return new Map();
   }
 }

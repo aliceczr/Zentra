@@ -23,11 +23,11 @@ export default function RootLayout() {
                   <Stack.Screen name="index" options={{ headerShown: false }} />
                   <Stack.Screen name="cadastro" options={{ title: "Crie sua Conta!", headerBackTitle: "Voltar" }} />
                   <Stack.Screen name="entrar" options={{ title: "Entrar", headerBackTitle: "Voltar" }} />
-                  <Stack.Screen name="teste" options={{ title: "🧪 Testes", headerBackTitle: "Voltar" }} />
                   <Stack.Screen name="produto" options={{ headerShown: false }} />
                   <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
                   <Stack.Screen name="pedido-detalhes/[id]" options={{ headerShown: false }} />
-                  <Stack.Screen name="compra-sucesso" options={{ headerShown: false }} />
+                  <Stack.Screen name="pagamento" options={{ title: 'Pagamento' }} />
+                  <Stack.Screen name="compra-sucesso" options={{ title: 'Sucesso' }} />
                 </Stack>
               </EnderecoProvider>
             </PagamentoProvider>
