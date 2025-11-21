@@ -69,5 +69,29 @@ export const authService = {
 
     return user;
   }
-  
+  ,
+
+  /**
+   * Envia email de recuperação de senha (reset password) usando Supabase.
+   * Usamos o fluxo padrão do Supabase: ele enviará um link hospedado onde o usuário
+   * poderá redefinir a senha (sem necessidade de deep-link no app).
+   */
+  async sendPasswordRecovery(email: string, redirectTo?: string) {
+    try {
+      // v2 API: resetPasswordForEmail
+      const opts = redirectTo ? { redirectTo } : undefined;
+      const { data, error } = await supabase.auth.resetPasswordForEmail(email, opts as any);
+      if (error) {
+        // mapear mensagens comuns para algo amigável
+        if (error.message && error.message.toLowerCase().includes('invalid')) {
+          throw new Error('Email inválido. Verifique o endereço informado.');
+        }
+        throw error;
+      }
+      return data;
+    } catch (err: any) {
+      throw err;
+    }
+  }
+
 };

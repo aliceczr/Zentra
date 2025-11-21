@@ -135,6 +135,8 @@ export default function Entrar() {
               </View>
             </View>
 
+            {/* (Esqueceu a senha removido) */}
+
             {/* Login Button */}
             <TouchableOpacity 
               style={{ 
@@ -184,6 +186,8 @@ export default function Entrar() {
               </Text>
             </Text>
           </TouchableOpacity>
+
+          
 
         </ScrollView>
       </KeyboardAvoidingView>

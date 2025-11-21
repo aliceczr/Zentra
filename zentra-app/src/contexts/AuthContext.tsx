@@ -33,7 +33,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setUser(currentUser);
         }
       } catch (error) {
-        console.error('Erro ao verificar usuário:', error);
+        // Erros aqui geralmente significam que não há usuário autenticado —
+        // não consideramos isso um erro a ser exibido ao usuário em produção.
+        // Registramos apenas em desenvolvimento para depuração.
+        if (__DEV__) {
+          // eslint-disable-next-line no-console
+          console.debug('Debug: erro ao verificar usuário (ignorado em produção):', error);
+        }
       } finally {
         setLoading(false);
       }

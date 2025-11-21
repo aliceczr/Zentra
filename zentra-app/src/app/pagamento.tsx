@@ -13,11 +13,11 @@ import { TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useListaCarrinho } from '../../hooks/hooksCarrinho';
-import { useAuth } from '../../contexts/AuthContext';
-import { useEnderecoCheckout } from '../../hooks/userEndereco';
-import { criarPedido, buscarPedidoPorId } from '../../services/pedidoService';
-import { criarPagamento } from '../../services/pagamentoService';
+import { useListaCarrinho } from '../hooks/hooksCarrinho';
+import { useAuth } from '../contexts/AuthContext';
+import { useEnderecoCheckout } from '../hooks/userEndereco';
+import { criarPedido, buscarPedidoPorId } from '../services/pedidoService';
+import { criarPagamento } from '../services/pagamentoService';
 
 type ResumoCompra = {
   codigo_pedido: string;
