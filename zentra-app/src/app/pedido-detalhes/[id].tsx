@@ -171,7 +171,7 @@ function StatusTimeline({ pedido }: StatusTimelineProps) {
 
 
 interface ItemDetalhesProps {
-  item: any; // ItemPedido do service
+  item: any; 
 }
 
 function ItemDetalhes({ item }: ItemDetalhesProps) {
@@ -301,8 +301,7 @@ function PagamentoInfo({ pedido }: PagamentoInfoProps) {
   return (
     <View style={styles.pagamentoContainer}>
       <Text style={styles.secaoTitulo}>Informações de Pagamento</Text>
-      
-      {/* ✅ SÓ MOSTRAR MÉTODO SE TIVER A INFORMAÇÃO */}
+
       {metodoPagamento && (
         <View style={styles.pagamentoItem}>
           <Text style={styles.pagamentoLabel}>Método:</Text>
@@ -367,7 +366,7 @@ export default function PedidoDetalhesScreen() {
               return;
             }
             try {
-              // Atualiza todos os pagamentos associados para CANCELADO
+         
               if (pedido.pagamentos && Array.isArray(pedido.pagamentos)) {
                 await Promise.all(pedido.pagamentos.map(async (p: any) => {
                   try {
@@ -378,13 +377,13 @@ export default function PedidoDetalhesScreen() {
                 }));
               }
 
-              // Atualiza o pedido para CANCELADO
+  
               await atualizarPedido(pedido.id, { status: 'CANCELADO' });
 
-              // Recarrega os dados localmente
+              
               recarregar();
 
-              // Navega de volta para o histórico e força recarregamento lá
+             
               Alert.alert('Sucesso', 'Pedido e pagamentos cancelados com sucesso', [
                 {
                   text: 'OK',
@@ -392,7 +391,7 @@ export default function PedidoDetalhesScreen() {
                     try {
                       router.replace('/historico' as any);
                     } catch (e) {
-                      // fallback: apenas volta
+                  
                       try { router.back(); } catch (_) {}
                     }
                   }

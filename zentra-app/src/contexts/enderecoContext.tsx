@@ -2,9 +2,6 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { enderecoService, EnderecoData } from '../services/enderecoService';
 import { useAuth } from './AuthContext';
 
-// ============================================================================
-// 📍 TYPES & INTERFACES
-// ============================================================================
 
 export interface Endereco {
   id?: string;
@@ -96,9 +93,7 @@ export function EnderecoProvider({ children }: EnderecoProviderProps) {
     setLoading(true);
     setError(null);
 
-    // Suporte a atualização otimista: se o novo endereço for marcado como principal,
-    // atualizamos localmente a flag dos endereços existentes e salvamos o estado anterior
-    // para possível rollback em caso de falha.
+ 
     let snapshotEnderecos: Endereco[] | null = null;
     const deveMarcarPrincipal = enderecos.length === 0 || !!dadosEndereco.principal;
 
@@ -118,19 +113,18 @@ export function EnderecoProvider({ children }: EnderecoProviderProps) {
       const resultado = await enderecoService.criaEndereco(enderecoCompleto);
 
       if (resultado) {
-        await buscarEnderecos(); // Recarregar lista com estado do servidor
+        await buscarEnderecos(); 
         return true;
       }
 
-      // se chegou aqui, operação não retornou sucesso
       setError('Erro ao criar endereço');
-      // restaura snapshot caso tenhamos aplicado otimização
+   
       if (snapshotEnderecos) setEnderecos(snapshotEnderecos);
       return false;
     } catch (err) {
       const mensagem = err instanceof Error ? err.message : 'Erro desconhecido ao criar endereço';
       setError(mensagem);
-      // rollback da atualização otimista
+      
       if (snapshotEnderecos) setEnderecos(snapshotEnderecos);
       return false;
     } finally {

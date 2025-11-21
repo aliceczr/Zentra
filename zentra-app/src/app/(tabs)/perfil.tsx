@@ -25,7 +25,7 @@ export default function PerfilScreen() {
   const { enderecoPrincipal, loading: loadingEndereco } = useEndereco();
   const { estatisticas } = useHistoricoPedidos();
 
-  // Estados para modais
+
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [showEditAddress, setShowEditAddress] = useState(false);
 

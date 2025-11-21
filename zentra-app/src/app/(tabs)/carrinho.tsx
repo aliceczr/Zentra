@@ -28,7 +28,6 @@ export default function CarrinhoScreen() {
     quantidadeItensTexto,
   } = useListaCarrinho();
 
-  // Função para confirmar e limpar carrinho
   const handleLimparCarrinho = () => {
     Alert.alert(
       'Limpar Carrinho',
@@ -44,7 +43,7 @@ export default function CarrinhoScreen() {
     );
   };
 
-  // Função para ir para checkout
+
   const handleIrParaCheckout = () => {
     if (isEmpty) {
       Alert.alert(
@@ -58,7 +57,7 @@ export default function CarrinhoScreen() {
     router.push('/(tabs)/pagamento');
   };
 
-  // Componente para item do carrinho
+
   const ItemCarrinhoComponent = ({ item }: { item: ItemCarrinho }) => {
     const {
       quantidade,
@@ -149,7 +148,7 @@ export default function CarrinhoScreen() {
     );
   };
 
-  // Tela vazia
+ 
   if (isEmpty) {
     return (
       <SafeAreaView style={styles.carrinhoContainer}>

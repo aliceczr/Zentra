@@ -25,7 +25,7 @@ export const carrinhoService = {
     try {
       const data = await AsyncStorage.getItem(CARRINHO_KEY);
       if (data) {
-        // Support old format (array) and new format { version: number, items: ItemCarrinho[] }
+      
         let parsed: any;
         try {
           parsed = JSON.parse(data);
@@ -36,7 +36,6 @@ export const carrinhoService = {
 
         const itens: ItemCarrinho[] = Array.isArray(parsed) ? parsed : (parsed.items || []);
 
-        // Deduplicate ids to avoid redundant fetches
         const idsUnicos = Array.from(new Set(itens.map(i => i.produto.id)));
         const produtosMap = await buscarPorIds(idsUnicos);
 
@@ -73,7 +72,7 @@ export const carrinhoService = {
  
   async salvarCarrinho(itens: ItemCarrinho[]): Promise<void> {
     try {
-      // Save with version for future migrations
+
       const payload = { version: 1, items: itens };
       await AsyncStorage.setItem(CARRINHO_KEY, JSON.stringify(payload));
     } catch (error) {

@@ -194,7 +194,7 @@ class SupabasePedidoService {
           .select('nome, imagem_principal, marca, fabricante')
           .eq('id', item.produto_id)
           .single();
-        // Verifica estoque se disponível
+       
         try {
           const { data: pFull } = await supabase.from('produtos').select('estoque_atual').eq('id', item.produto_id).single();
           if (pFull && typeof (pFull as any).estoque_atual === 'number') {
@@ -204,7 +204,7 @@ class SupabasePedidoService {
             }
           }
         } catch (err) {
-          // Repassa erro de estoque para o chamador
+          
           throw err;
         }
 
@@ -263,7 +263,7 @@ class SupabasePedidoService {
         return null;
       }
 
-      // Normalizar pagamentos dentro do pedido para compatibilidade
+
       if (data && data.pagamentos && Array.isArray(data.pagamentos)) {
         data.pagamentos = data.pagamentos.map((p: any) => ({
           ...p,
@@ -333,7 +333,7 @@ class SupabasePedidoService {
   }
 
   async criarPagamento(dados: CriarPagamento): Promise<Pagamento> {
-    // Delegate to centralized pagamentoService implementation to avoid duplication.
+
     return await criarPagamentoService(dados as any);
   }
 

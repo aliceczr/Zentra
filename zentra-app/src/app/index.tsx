@@ -20,14 +20,14 @@ export default function LoginScreen() {
   
     });
 
-    // Se usuário já estiver logado, redireciona para home (exceto durante cadastro)
+
     useEffect(() => {
       if (!loading && user && !isRegistering) {
         router.replace('/(tabs)/home');
       }
     }, [user, loading, isRegistering]);
 
-    // Função para limpar sessão (para debug)
+ 
     const handleClearSession = async () => {
       try {
         const { error } = await supabase.auth.signOut();

@@ -287,7 +287,7 @@ export async function buscarPorIds(ids: number[]): Promise<Map<number, Produto>>
   try {
     if (!ids || ids.length === 0) return new Map();
 
-    // Supabase supports `in` to fetch multiple ids in one query
+
     const { data, error } = await supabase
       .from('produtos')
       .select('*')

@@ -6,7 +6,7 @@ import { userService } from '../services/userService';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function CompletarPerfil() {
-  // Dados pessoais
+
   const [nome, setNome] = useState('');
   const [cpf, setCpf] = useState('');
   const [telefone, setTelefone] = useState('');
@@ -15,7 +15,7 @@ export default function CompletarPerfil() {
   
   const { user } = useAuth();
 
-  // Função para formatar CPF
+
   const formatCPF = (text: string) => {
     const cleaned = text.replace(/\D/g, '');
     const match = cleaned.match(/^(\d{3})(\d{3})(\d{3})(\d{2})$/);
@@ -25,7 +25,7 @@ export default function CompletarPerfil() {
     return cleaned;
   };
 
-  // Função para formatar telefone
+
   const formatTelefone = (text: string) => {
     const cleaned = text.replace(/\D/g, '');
     const match = cleaned.match(/^(\d{2})(\d{5})(\d{4})$/);
@@ -35,7 +35,6 @@ export default function CompletarPerfil() {
     return cleaned;
   };
 
-  // Função para formatar data de nascimento
   const formatDataNascimento = (text: string) => {
     const cleaned = text.replace(/\D/g, '');
     let formatted = cleaned;

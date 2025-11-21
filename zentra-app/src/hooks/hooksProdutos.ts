@@ -379,7 +379,7 @@ export function useFiltrosDinamicos() {
   }, []);
 
   return {
-    // Estados
+ 
     fabricantes,
     marcas,
     categorias,

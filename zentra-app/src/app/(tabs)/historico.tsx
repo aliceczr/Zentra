@@ -112,7 +112,7 @@ export default function HistoricoScreen() {
   } = useHistoricoPedidos();
 
   const handlePedidoPress = (pedido: Pedido) => {
-    // Navegar para detalhes do pedido
+
     router.push(`/pedido-detalhes/${pedido.id}` as any);
   };
 

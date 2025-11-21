@@ -83,7 +83,6 @@ export const enderecoService = {
     async atualizarEndereco(enderecoId: string, dadosAtualizacao: Partial<EnderecoData>) {
         const authUserId = await this._getAuthenticatedUserId();
 
-        // Se está definindo como principal, remover principal dos outros
         if (dadosAtualizacao.principal === true) {
             await supabase
                 .from('endereco_usuario')
@@ -129,13 +128,13 @@ export const enderecoService = {
         if (authUserId !== userId) {
             throw new Error('Usuário não autenticado');
         }
-        // Remover principal de todos os endereços do usuário
+       
         await supabase
             .from('endereco_usuario')
             .update({ principal: false })
             .eq('user_id', userId);
 
-        // Definir o específico como principal
+
         const { data, error } = await supabase
             .from('endereco_usuario')
             .update({ 
@@ -198,7 +197,7 @@ export const enderecoService = {
                 pais: 'Brasil'
             };
         } catch (error) {
-            // preserva e relança o erro original quando possível
+            
             if (error instanceof Error) throw error;
             throw new Error('Erro ao buscar CEP');
         }

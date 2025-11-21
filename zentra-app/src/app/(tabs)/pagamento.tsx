@@ -52,17 +52,16 @@ export default function PagamentoScreen() {
   const [erro, setErro] = React.useState('');
   const [modalVisible, setModalVisible] = React.useState(false);
   const [paymentError, setPaymentError] = React.useState<string | null>(null);
-  // Estado de desenvolvimento para simular respostas de pagamento
-  // Em dev, padrão para 'APROVADO' para facilitar testes locais (estoque será decrementado).
+
   const [simulateStatus, setSimulateStatus] = React.useState<'NONE' | 'APROVADO' | 'RECUSADO'>('APROVADO');
 
-  // Extrai o processamento do pagamento para permitir reuso (tentar novamente)
+ 
   async function processPayment() {
     setLoading(true);
     setErro('');
     setPaymentError(null);
     try {
-      // Validações locais
+
       if (!user || !user.id) throw new Error('Usuário não encontrado');
       if (!enderecoEntrega || !enderecoEntrega.id) throw new Error('Endereço não encontrado');
 
@@ -73,7 +72,7 @@ export default function PagamentoScreen() {
         return;
       }
 
-      // 1. Criar pedido
+    
       const pedido = await criarPedido({
         usuario_id: user.id,
         endereco_id: enderecoEntrega.id,
@@ -92,7 +91,7 @@ export default function PagamentoScreen() {
 
       const pagamentoPayload = {
         pedido_id: pedido.id,
-        // permitir simulação em ambiente de desenvolvimento
+       
         status: simulateStatus === 'NONE' ? 'PENDENTE' : simulateStatus,
         status_detail: metodoPagamento,
         valor_pago: pedido.total,
@@ -100,10 +99,10 @@ export default function PagamentoScreen() {
 
       const pagamentoCriado = await criarPagamento(pagamentoPayload as any);
 
-      // Normalizar status vindo do serviço
+
       const statusRetorno = ((pagamentoCriado as any).status_pagamento || (pagamentoCriado as any).status || '').toString().toUpperCase();
 
-      // Se pagamento não aprovado, mostrar modal com opções
+
       if (statusRetorno !== 'APROVADO' && statusRetorno !== 'PAGO' && statusRetorno !== 'APPROVED') {
         const detalhe = (pagamentoCriado as any).status_detail || (pagamentoCriado as any).metodo_pagamento || null;
         setPaymentError(detalhe ? `Pagamento recusado: ${detalhe}` : 'Pagamento recusado. Tente outro método.');
@@ -112,11 +111,11 @@ export default function PagamentoScreen() {
         return;
       }
 
-      // 3. Buscar pedido completo
+  
       const pedidoCompleto = await buscarPedidoPorId(pedido.id);
       if (!pedidoCompleto) throw new Error('Pedido não encontrado');
 
-      // Navegar para página de confirmação de compra
+ 
       router.push('/compra-sucesso');
 
     } catch (err) {
@@ -127,7 +126,7 @@ export default function PagamentoScreen() {
     }
   }
 
-  // Funções para o modal
+
   function handleTryAgain() {
     setModalVisible(false);
     processPayment();
@@ -135,14 +134,14 @@ export default function PagamentoScreen() {
 
   function handleChooseOther() {
     setModalVisible(false);
-    // apenas fecha o modal; o usuário pode escolher outro método na UI
+
   }
 
   function validarCartaoCampos(): { valido: boolean; erros: string[] } {
     const erros: string[] = [];
     const numeroLimpo = cartao.numero.replace(/\D/g, '');
 
-    // Apenas validar quando método for cartão
+ 
     if (metodoPagamento === 'CARTAO_CREDITO' || metodoPagamento === 'CARTAO_DEBITO') {
       if (!numeroLimpo || numeroLimpo.length < 13) {
         erros.push('Número do cartão inválido');
@@ -152,7 +151,7 @@ export default function PagamentoScreen() {
         erros.push('Nome do titular é obrigatório');
       }
 
-      // Validade no formato MM/AA
+
       const validade = (cartao.validade || '').replace(/\s/g, '');
       if (!/^\d{2}\/\d{2}$/.test(validade)) {
         erros.push('Validade deve ter o formato MM/AA');
@@ -161,7 +160,7 @@ export default function PagamentoScreen() {
         if (isNaN(mm) || mm < 1 || mm > 12) {
           erros.push('Mês da validade inválido');
         }
-        // Ano: aceitar qualquer dois dígitos, não recusar aqui (será verificado pelo backend/ou gateway real)
+
       }
 
       const cvvLimpo = (cartao.cvv || '').replace(/\D/g, '');

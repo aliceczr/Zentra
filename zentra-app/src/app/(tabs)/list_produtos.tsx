@@ -201,7 +201,7 @@ export default function ListProdutosScreen() {
     </View>
   );
 
-  // Função para navegar para detalhes do produto
+
   const navegarParaDetalhes = (produtoId: number) => {
     router.push(`/produto/${produtoId}` as any);
   };

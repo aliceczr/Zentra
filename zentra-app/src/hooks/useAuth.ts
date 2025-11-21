@@ -55,14 +55,14 @@ export const useAuthForm = () => {
         throw new Error('Erro ao criar conta de autenticação');
       }
       
-      // Corrigir acesso ao user - o Supabase retorna { user, session }
+
       const user = authResult.user;
       
       if (!user?.id) {
         throw new Error('Usuário criado mas ID não encontrado');
       }
 
-      // Criar perfil com dados pessoais
+   
       await userService.createProfile({
         auth_id: user.id,
         nome: profileData.nome,

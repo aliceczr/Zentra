@@ -77,7 +77,7 @@ zentra-app/
 │   │   ├── completar-perfil.tsx # Completar cadastro
 │   │   ├── endereco.tsx         # Seleção/cadastro de endereço
 │   │   ├── pagamento.tsx        # Tela de pagamento
-│   │   ├── aguardando-pagamento.tsx # Aguardando confirmação
+│   │   ├── 
 │   │   ├── compra-sucesso.tsx   # Confirmação de compra
 │   │   └── _layout.tsx          # Layout raiz
 │   ├── components/              # Componentes reutilizáveis
@@ -217,12 +217,7 @@ cp .env.example .env
 ```
 
 **Passo 2: Obtenha as credenciais do Supabase**
-1. 🌐 Acesse [supabase.com](https://supabase.com) e faça login
-2. 📁 Selecione seu projeto (ou crie um novo)
-3. ⚙️ Vá em **Settings** → **API** 
-4. 📋 Copie as seguintes informações:
-   - **Project URL** → exemplo: `https://abc123.supabase.co`
-   - **anon public key** → exemplo: `eyJhbGc...` (chave longa)
+Para obter as credencias do banco é necessário pedir para um dos colaboradores do aplicativo. 
 
 **Passo 3: Edite o arquivo .env**
 ```env

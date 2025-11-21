@@ -101,7 +101,7 @@ export function usePedidoDetalhes(pedidoId: number | null) {
 
 
 export function formatarStatusPedido(pedido: Pedido): { texto: string; cor: string; icone: string } {
-  // debug logs removed
+
   
 
   

@@ -5,7 +5,7 @@ export type StatusPagamento = 'PENDENTE' | 'PROCESSANDO' | 'APROVADO' | 'RECUSAD
 export type TipoMetodo = 'CARTAO_CREDITO' | 'CARTAO_DEBITO' | 'PIX';
 
 export interface Pagamento {
-  id: string; // uuid
+  id: string; 
   pedido_id: number;
   preference_id?: string | null;
   payment_id?: string | null;
@@ -71,11 +71,10 @@ export async function criarPagamento(dados: CriarPagamento): Promise<Pagamento> 
 
   const pagamentoData: any = {
     ...dados,
-    // Respeitar status enviado (útil para simular recusas em testes)
+   
     status: (dados as any).status ?? 'PENDENTE',
     status_detail: (dados as any).status_detail || null,
     valor_pago: dados.valor_pago ?? null,
-    // data_aprovacao apenas quando status for aprovado
     data_aprovacao: (dados as any).data_aprovacao ?? (((dados as any).status === 'APROVADO' || (dados as any).status === 'PAGO') ? now : null),
     created_at: now,
   };
@@ -86,7 +85,7 @@ export async function criarPagamento(dados: CriarPagamento): Promise<Pagamento> 
 
 
   try {
-    // Atualiza o pedido para PAGO somente quando o pagamento estiver aprovado
+   
     const pagoStatuses = ['APROVADO', 'PAGO', 'APPROVED'];
     const pagamentoStatus = (pagamentoData.status || '').toString().toUpperCase();
     if (pagoStatuses.includes(pagamentoStatus)) {

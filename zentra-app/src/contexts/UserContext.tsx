@@ -44,7 +44,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   const criarPerfil = async (data: { auth_id: string; nome: string; cpf: string; telefone: string; dataNascimento: string }): Promise<boolean> => {
     try {
       await userService.createProfile(data);
-      // Atualiza o perfil após criar
+      
       await fetchUserProfile();
       return true;
     } catch (error) {
@@ -55,7 +55,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
 
   useEffect(() => {
     fetchUserProfile();
-  }, [user]); // Executa quando o usuário muda
+  }, [user]);
 
   return (
     <UserContext.Provider value={{ profile, loadingProfile, fetchUserProfile, criarPerfil }}>

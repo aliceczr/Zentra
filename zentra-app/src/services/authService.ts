@@ -17,7 +17,7 @@ export const authService = {
       email,
       password,
       options: {
-        emailRedirectTo: undefined // Para desenvolvimento - não exige confirmação
+        emailRedirectTo: undefined 
       }
     });
 

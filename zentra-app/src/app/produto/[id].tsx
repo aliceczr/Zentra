@@ -41,12 +41,12 @@ export default function ProdutoDetalhes() {
     if (!produto) return;
     
     try {
-      // Proteção: não permitir adicionar se sem estoque
+      
       if (isSoldOut) {
         Alert.alert('Esgotado', 'Este produto está esgotado e não pode ser adicionado ao carrinho.');
         return;
       }
-      // Proteção: não permitir adicionar mais do que o estoque disponível
+      
       if (typeof (produto as any).estoque_atual === 'number' && quantidade > (produto as any).estoque_atual) {
         Alert.alert('Quantidade inválida', `Apenas ${(produto as any).estoque_atual} unidade(s) disponíveis.`);
         return;
